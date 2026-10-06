@@ -3,12 +3,23 @@ ProofForge AI - Enterprise Report Generator
 Produces formal penetration testing reports in Markdown and executive-styled HTML.
 """
 
+import os
+import base64
 from models import PentestReport, SeverityLevel, EvidenceIntegrityStatus
 
 try:
     import markdown
 except ImportError:
     markdown = None
+
+
+def _get_base64_asset(filename: str) -> str:
+    path = os.path.join(os.path.dirname(__file__), "assets", filename)
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+    return ""
+
 
 
 def export_markdown_report(report: PentestReport) -> str:
@@ -107,10 +118,17 @@ def export_html_report(report: PentestReport) -> str:
     """Renders high-grade styled HTML report suitable for client deliverables or PDF printing."""
     md_content = export_markdown_report(report)
     
-    if markdown:
-        html_body = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])
-    else:
-        html_body = f"<pre style='white-space: pre-wrap; font-family: inherit;'>{md_content}</pre>"
+    banner_b64 = _get_base64_asset("banner.jpg")
+    logo_b64 = _get_base64_asset("logo.jpg")
+
+    banner_html = ""
+    if banner_b64:
+        banner_html = f'<img src="data:image/jpeg;base64,{banner_b64}" style="width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; margin-bottom: 24px; border: 1px solid var(--border-color);" alt="Assessment Banner" />'
+
+    logo_html = ""
+    if logo_b64:
+        logo_html = f'<img src="data:image/jpeg;base64,{logo_b64}" style="width: 50px; height: 50px; border-radius: 50%; vertical-align: middle; margin-right: 12px; border: 1px solid var(--accent-blue);" alt="Logo" />'
+
 
     # Professional Cybersecurity Consulting CSS
     styled_html = f"""<!DOCTYPE html>
