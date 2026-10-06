@@ -286,6 +286,7 @@ def export_html_report(report: PentestReport) -> str:
 </head>
 <body>
     <div class="container">
+        {banner_html}
         {html_body}
     </div>
 </body>
