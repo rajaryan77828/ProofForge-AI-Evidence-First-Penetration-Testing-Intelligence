@@ -127,10 +127,13 @@ def export_html_report(report: PentestReport) -> str:
 
     logo_html = ""
     if logo_b64:
+        logo_html = f'<img src="data:image/jpeg;base64,{logo_b64}" style="width: 50px; height: 50px; border-radius: 50%; vertical-align: middle; margin-right: 12px; border: 1px solid var(--accent-blue);" alt="Logo" />'
+
     if markdown:
         html_body = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])
     else:
         html_body = f"<pre style='white-space: pre-wrap; font-family: inherit;'>{md_content}</pre>"
+
 
     # Professional Cybersecurity Consulting CSS
     styled_html = f"""<!DOCTYPE html>
