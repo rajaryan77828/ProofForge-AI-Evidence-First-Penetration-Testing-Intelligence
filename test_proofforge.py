@@ -232,15 +232,83 @@ def test_auth_and_trial_limits():
     print("   [PASS] 2 Free Runs enforcement, Cloud Authentication, and Cross-Device Sync verified.")
 
 
+def test_payment_processing_and_verification():
+    print("-> Running Payment Gateway Authorization, Verification & Access Provisioning Tests...")
+    from payments import verify_and_process_subscription_payment, get_tier_pricing, get_user_transactions
+    from auth import register_user, get_user_profile
+    import time
+
+    payer_email = f"payer_{int(time.time())}@defense.corp"
+    ok, msg, user = register_user(payer_email, "PayerSecurePass123!", "Global Chief Assessor", "Defense Corp")
+    assert ok is True
+    assert user.is_subscribed is False
+
+    # Check pricing calculation
+    amt_mo, lbl_mo = get_tier_pricing(SubscriptionTier.PRO_MAX_ULTRA, "monthly")
+    assert amt_mo == 499.00
+    assert "$499/month" in lbl_mo
+
+    amt_ann, lbl_ann = get_tier_pricing(SubscriptionTier.PRO_MAX_ULTRA, "annual")
+    assert amt_ann == 4790.00
+    assert "$4,790/year" in lbl_ann
+
+    # 1. Test Payment Verification Failure (invalid card format)
+    fail_ok, fail_msg, fail_tx = verify_and_process_subscription_payment(
+        user_email=payer_email,
+        tier=SubscriptionTier.PRO_MAX_ULTRA,
+        billing_cycle="monthly",
+        payment_method_type="Credit Card",
+        card_number="123",  # invalid
+        expiry="12/28",
+        cvv="123",
+        cardholder_name="Global Chief Assessor"
+    )
+    assert fail_ok is False
+    assert "Invalid credit card number" in fail_msg
+
+    # 2. Test Payment Verification Success (valid payment gateway approval)
+    succ_ok, succ_msg, receipt = verify_and_process_subscription_payment(
+        user_email=payer_email,
+        tier=SubscriptionTier.PRO_MAX_ULTRA,
+        billing_cycle="monthly",
+        payment_method_type="Credit Card",
+        card_number="4242 4242 4242 4242",
+        expiry="12/28",
+        cvv="456",
+        cardholder_name="Global Chief Assessor"
+    )
+    assert succ_ok is True
+    assert receipt is not None
+    assert receipt.status == "verified"
+    assert receipt.tier == SubscriptionTier.PRO_MAX_ULTRA
+    assert receipt.card_last4 == "4242"
+    assert len(receipt.verification_hash) == 64
+    assert "INV-PF-" in receipt.invoice_number
+
+    # 3. Verify user account immediately gained Pro Max Ultra access
+    upgraded_user = get_user_profile(payer_email)
+    assert upgraded_user.is_subscribed is True
+    assert upgraded_user.subscription_tier == SubscriptionTier.PRO_MAX_ULTRA
+    assert "$499/month" in upgraded_user.subscription_price_paid
+
+    # 4. Verify transaction ledger record exists
+    txs = get_user_transactions(payer_email)
+    assert len(txs) == 1
+    assert txs[0]["transaction_id"] == receipt.transaction_id
+    print("   [PASS] Payment authorization, cryptographic verification, and instant global access verified.")
+
+
 if __name__ == "__main__":
     test_cvss_calculation()
     test_parser_and_integrity_audit()
     test_subscription_tiers()
     test_company_presets()
     test_auth_and_trial_limits()
+    test_payment_processing_and_verification()
     test_deployment_readiness()
     print("\n=======================================================")
     print("[READY] PROOFFORGE AI IS 100% READY FOR PRODUCTION DEPLOYMENT!")
     print("=======================================================")
+
 
 

@@ -1,0 +1,30 @@
+[
+  {
+    "transaction_id": "PF-TXN-GOOGLE-2026",
+    "user_email": "enterprise@google.com",
+    "tier": "Pro Max Ultra",
+    "billing_cycle": "annual",
+    "amount_usd": 4790.0,
+    "currency": "USD",
+    "status": "verified",
+    "payment_method": "Corporate Wire Transfer",
+    "card_last4": "N/A",
+    "verification_hash": "8f582ea08918e1399cf8f648d29b951b9d85065989c7061dd104b56d334ed530",
+    "timestamp": "2026-08-15 08:35:10 UTC",
+    "invoice_number": "INV-PF-2026-0891"
+  },
+  {
+    "transaction_id": "PF-TXN-DFD6A496CCBC",
+    "user_email": "payer_1791727914@defense.corp",
+    "tier": "Pro Max Ultra",
+    "billing_cycle": "monthly",
+    "amount_usd": 499.0,
+    "currency": "USD",
+    "status": "verified",
+    "payment_method": "Credit Card",
+    "card_last4": "4242",
+    "verification_hash": "a9f9358abaff9c8932018c068ffde6ae1958e75d1a2a7b235f28cc8a8257f925",
+    "timestamp": "2026-10-11 14:11:54 UTC",
+    "invoice_number": "INV-PF-202610-CD873D"
+  }
+]

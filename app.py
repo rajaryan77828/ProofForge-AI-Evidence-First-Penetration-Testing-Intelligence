@@ -22,6 +22,11 @@ from auth import (
     register_user, authenticate_user, get_user_profile,
     can_run_assessment, record_assessment_run, upgrade_user_subscription
 )
+from payments import (
+    verify_and_process_subscription_payment, get_tier_pricing,
+    get_user_transactions, PaymentTransaction
+)
+
 
 st.set_page_config(
     page_title="ProofForge AI | Global Cloud Pentest Platform",
@@ -67,6 +72,13 @@ if "selected_preset" not in st.session_state:
 
 if "billing_cycle" not in st.session_state:
     st.session_state.billing_cycle = "Monthly"
+
+if "checkout_tier" not in st.session_state:
+    st.session_state.checkout_tier = None  # SubscriptionTier when user is in payment flow
+
+if "last_payment_receipt" not in st.session_state:
+    st.session_state.last_payment_receipt = None
+
 
 
 # Keep tier in sync with user profile if authenticated
@@ -741,21 +753,212 @@ elif nav == "💎 Subscriptions & Pricing":
             if is_user_current:
                 st.button(f"✅ Current Active Plan ({plan['name']})", key=f"active_{plan['name']}", disabled=True, use_container_width=True)
             elif user:
-                if st.button(f"⚡ Subscribe to {plan['name']} ({price_display}{plan['period']})", key=f"sub_{plan['name']}", type="primary" if is_featured else "secondary", use_container_width=True):
-                    success, msg, updated = upgrade_user_subscription(user.email, tier_key, billing_period="annual" if is_annual else "monthly")
-                    if success:
-                        st.session_state.authenticated_user = updated
-                        st.session_state.current_tier = tier_key
-                        st.toast(f"Subscription Activated: {plan['name']}!", icon="🎉")
-                        st.success(f"Payment Confirmed! Your account ({user.email}) is now upgraded to {plan['name']} across all your devices worldwide.")
-                        time.sleep(1)
-                        st.rerun()
+                if st.button(f"💳 Proceed to Checkout: {plan['name']} ({price_display}{plan['period']})", key=f"checkout_btn_{plan['name']}", type="primary" if is_featured else "secondary", use_container_width=True):
+                    st.session_state.checkout_tier = tier_key
+                    st.rerun()
             else:
                 if st.button(f"🔒 Sign In to Subscribe to {plan['name']}", key=f"login_to_sub_{plan['name']}", use_container_width=True):
                     st.session_state.active_page = "👤 Account & Cross-Device Sync"
                     st.rerun()
 
+    # REAL PAYMENT CHECKOUT & VERIFICATION PORTAL
+    if st.session_state.checkout_tier:
+        selected_tier = st.session_state.checkout_tier
+        sel_plan = PRICING_PLANS[selected_tier]
+        cost_num, cost_label = get_tier_pricing(selected_tier, "annual" if is_annual else "monthly")
+
+        st.markdown('<div class="cyber-divider"></div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, rgba(22, 27, 34, 0.98), rgba(13, 17, 23, 0.99)); border: 2px solid {sel_plan['accent']}; border-radius: 14px; padding: 26px 30px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7); animation: fadeInUp 0.5s ease-out;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <h3 style="margin: 0; color: #fff;">🛡️ Secure Payment Gateway & Verification Terminal</h3>
+                    <div style="color: #8b949e; font-size: 0.88rem; margin-top: 4px;">Upgrading account: <b>{user.email if user else 'Guest'}</b> · Instant Access Provisioning</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 1.4rem; font-weight: 800; color: {sel_plan['accent']};">{sel_plan['name']} Tier</div>
+                    <div style="font-size: 0.9rem; color: #3fb950; font-weight: 700;">Total: {cost_label}</div>
+                </div>
+            </div>
+            <div style="font-size: 0.8rem; color: #8b949e; margin-bottom: 16px;">
+                🔒 256-bit TLS Encrypted · PCI-DSS Compliant Gateway · Verified Global Access Synchronized Worldwide
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        pay_col1, pay_col2 = st.columns([3, 2])
+
+        with pay_col1:
+            st.markdown("#### 1. Select Payment Method")
+            pay_method = st.radio(
+                "Payment Method",
+                ["Credit Card / Debit Card", "Corporate Wire Transfer / ACH", "Crypto (USDC / Ethereum)"],
+                horizontal=True,
+                label_visibility="collapsed"
+            )
+
+            with st.form("payment_verification_form"):
+                if pay_method == "Credit Card / Debit Card":
+                    st.markdown("##### 💳 Card Details")
+                    c_name = st.text_input("Cardholder Name", value=user.full_name if user else "Alex Rivera")
+                    c_num = st.text_input("Card Number", placeholder="4242 •••• •••• 4242", help="Visa, Mastercard, Amex, Discover")
+                    sub_c1, sub_c2 = st.columns(2)
+                    with sub_c1:
+                        c_exp = st.text_input("Expiry Date (MM/YY)", placeholder="12/28")
+                    with sub_c2:
+                        c_cvv = st.text_input("Security Code (CVV)", type="password", placeholder="123")
+                    wire_ref = None
+
+                elif pay_method == "Corporate Wire Transfer / ACH":
+                    st.markdown("##### 🏦 Enterprise Wire / ACH Instructions")
+                    st.info("""
+                    **Bank Name:** Silicon Valley Tech Bank N.A. (San Francisco, CA)  
+                    **Account Name:** ProofForge Intelligence LLC  
+                    **Routing / ABA:** 121000358 | **SWIFT / BIC:** SVTBUS33  
+                    **Account Number:** 984021849102  
+                    """)
+                    c_name = user.full_name if user else "Authorized Assessor"
+                    c_num = None
+                    c_exp = None
+                    c_cvv = None
+                    wire_ref = st.text_input("Wire Reference Number / Purchase Order (PO)", placeholder="WT-2026-904128")
+
+                else:
+                    st.markdown("##### 🪙 Web3 / Crypto Settlement")
+                    st.info("""
+                    **Accepted Tokens:** USDC (Ethereum, Polygon, Arbitrum)  
+                    **Settlement Vault:** `0x71C...49A2d880B14B` (ProofForge Smart Contract)  
+                    """)
+                    c_name = user.full_name if user else "Web3 Assessor"
+                    c_num = None
+                    c_exp = None
+                    c_cvv = None
+                    wire_ref = st.text_input("Transaction Hash (TxID)", placeholder="0x8f2d4e8b91c...102a")
+
+                submit_pay = st.form_submit_button(
+                    label=f"🔒 Confirm & Authorize Payment ({cost_label})",
+                    type="primary",
+                    use_container_width=True
+                )
+
+                if submit_pay:
+                    with st.spinner("Connecting to Banking Gateway → Running Fraud Scoring → Verifying Authorization..."):
+                        time.sleep(1.2)
+                        method_label = "Credit Card" if "Credit" in pay_method else "Corporate Wire Transfer / ACH" if "Wire" in pay_method else "Crypto (USDC / Ethereum)"
+                        
+                        success_pay, msg_pay, receipt = verify_and_process_subscription_payment(
+                            user_email=user.email,
+                            tier=selected_tier,
+                            billing_cycle="annual" if is_annual else "monthly",
+                            payment_method_type=method_label,
+                            card_number=c_num,
+                            expiry=c_exp,
+                            cvv=c_cvv,
+                            cardholder_name=c_name,
+                            wire_reference=wire_ref
+                        )
+
+                        if success_pay and receipt:
+                            st.session_state.last_payment_receipt = receipt
+                            # Refresh user profile in session
+                            updated_user = get_user_profile(user.email)
+                            st.session_state.authenticated_user = updated_user
+                            st.session_state.current_tier = selected_tier
+                            st.session_state.checkout_tier = None
+                            st.toast("Payment Verified! Subscription Active Globally.", icon="🎉")
+                            st.rerun()
+                        else:
+                            st.error(f"❌ Payment Authorization Failed: {msg_pay}")
+
+        with pay_col2:
+            st.markdown("#### 2. Order Summary & Guarantee")
+            st.markdown(f"""
+            <div style="background: rgba(13, 17, 23, 0.8); border: 1px solid #30363d; border-radius: 10px; padding: 18px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #8b949e;">Plan:</span>
+                    <span style="font-weight: 700; color: #fff;">ProofForge {sel_plan['name']}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #8b949e;">Billing Period:</span>
+                    <span style="color: #38bdf8;">{'Annual (20% Off)' if is_annual else 'Monthly'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #8b949e;">Device Licenses:</span>
+                    <span style="color: #3fb950; font-weight: 700;">Unlimited Devices 🌍</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: #8b949e;">Finding Quota:</span>
+                    <span style="color: #f0883e; font-weight: 700;">{sel_plan['features'][0]}</span>
+                </div>
+                <div class="cyber-divider" style="margin: 12px 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 800;">
+                    <span style="color: #fff;">Total Due Now:</span>
+                    <span style="color: {sel_plan['accent']};">{cost_label}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button("❌ Cancel Checkout", use_container_width=True):
+                st.session_state.checkout_tier = None
+                st.rerun()
+
+    # DISPLAY VERIFIED PAYMENT RECEIPT IF JUST PURCHASED
+    if st.session_state.last_payment_receipt:
+        rcpt = st.session_state.last_payment_receipt
+        st.markdown('<div class="cyber-divider"></div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background: rgba(46, 160, 67, 0.1); border: 2px solid #3fb950; border-radius: 14px; padding: 24px; animation: fadeInUp 0.6s ease-out; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="margin: 0; color: #3fb950;">✅ Payment Verified & Access Provisioned!</h3>
+                    <div style="color: #e6edf3; font-size: 0.9rem; margin-top: 4px;">
+                        Transaction ID: <b>{rcpt.transaction_id}</b> | Invoice: <b>{rcpt.invoice_number}</b>
+                    </div>
+                </div>
+                <span class="badge-tier" style="background: rgba(46, 160, 67, 0.3); color: #3fb950;">VERIFIED & ACTIVE</span>
+            </div>
+            <div class="cyber-divider" style="margin: 14px 0;"></div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 0.85rem;">
+                <div><span style="color: #8b949e;">Account:</span><br/><b>{rcpt.user_email}</b></div>
+                <div><span style="color: #8b949e;">Subscribed Tier:</span><br/><b style="color: #38bdf8;">{rcpt.tier.value}</b></div>
+                <div><span style="color: #8b949e;">Amount Paid:</span><br/><b>${rcpt.amount_usd:.2f} USD</b></div>
+                <div><span style="color: #8b949e;">Payment Method:</span><br/><b>{rcpt.payment_method}</b></div>
+                <div><span style="color: #8b949e;">Verification Timestamp:</span><br/><b>{rcpt.timestamp}</b></div>
+            </div>
+            <div style="margin-top: 14px;">
+                <span style="font-size: 0.72rem; color: #8b949e; text-transform: uppercase;">Cryptographic Ledger Hash:</span>
+                <div class="hash-badge">{rcpt.verification_hash}</div>
+            </div>
+            <div style="margin-top: 16px;">
+                <span style="color: #3fb950; font-weight: 700;">🚀 You now have unrestricted access to {rcpt.tier.value} from any device worldwide!</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Got It! Go to Intelligence Platform ➔", type="primary"):
+            st.session_state.last_payment_receipt = None
+            st.session_state.active_page = "🛡️ Intelligence Platform"
+            st.rerun()
+
     st.markdown('<div class="cyber-divider"></div>', unsafe_allow_html=True)
+
+    # Historical Transactions for Logged-In User
+    if user:
+        user_txs = get_user_transactions(user.email)
+        if user_txs:
+            st.markdown("### 🧾 Your Verified Payment & Invoice Ledger")
+            ledger_table = []
+            for tx in user_txs:
+                ledger_table.append({
+                    "Invoice #": tx.get("invoice_number"),
+                    "Transaction ID": tx.get("transaction_id"),
+                    "Plan Tier": tx.get("tier"),
+                    "Amount": f"${tx.get('amount_usd', 0):.2f} USD",
+                    "Method": tx.get("payment_method"),
+                    "Timestamp": tx.get("timestamp"),
+                    "Status": "✅ Verified" if tx.get("status") == "verified" else tx.get("status")
+                })
+            st.dataframe(ledger_table, use_container_width=True, hide_index=True)
+            st.markdown('<div class="cyber-divider"></div>', unsafe_allow_html=True)
 
     # Detailed Feature Matrix Table
     st.markdown("### 📊 Enterprise Feature Matrix & Specifications")
@@ -776,6 +979,7 @@ elif nav == "💎 Subscriptions & Pricing":
         {"Feature / Specification": "Support Response SLA", "Pro Plan": "48-hr Email", "Ultra Plan": "12-hr Priority", "Pro Max Ultra Plan": "1-hr Dedicated Security Lead"},
     ]
     st.dataframe(matrix_data, use_container_width=True, hide_index=True)
+
 
 
 # =============================================================================

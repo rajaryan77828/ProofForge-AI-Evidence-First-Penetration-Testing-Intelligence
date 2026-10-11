@@ -43,5 +43,35 @@
     "created_at": "2026-10-11 13:57:27 UTC",
     "last_login_at": "2026-10-11 13:57:27 UTC",
     "last_device_info": "Linux Desktop (Tokyo)"
+  },
+  "test_pentester_1791727914@security.org": {
+    "email": "test_pentester_1791727914@security.org",
+    "password_hash": "727510b1714149b808426ce56538719375c9b6d1a391bea89345118012c5400e",
+    "full_name": "Test Pentester",
+    "organization": "Cyber Audit Lab",
+    "subscription_tier": "Pro Max Ultra",
+    "is_subscribed": true,
+    "subscription_plan_name": "Pro Max Ultra",
+    "subscription_price_paid": "$499/month",
+    "runs_used": 2,
+    "max_free_runs": 2,
+    "created_at": "2026-10-11 14:11:54 UTC",
+    "last_login_at": "2026-10-11 14:11:54 UTC",
+    "last_device_info": "Linux Desktop (Tokyo)"
+  },
+  "payer_1791727914@defense.corp": {
+    "email": "payer_1791727914@defense.corp",
+    "password_hash": "c552caf3bb225f4c364466affd5998b5fd96c551b7c4dc418b1c43bd1b5a93b5",
+    "full_name": "Global Chief Assessor",
+    "organization": "Defense Corp",
+    "subscription_tier": "Pro Max Ultra",
+    "is_subscribed": true,
+    "subscription_plan_name": "Pro Max Ultra",
+    "subscription_price_paid": "$499/month",
+    "runs_used": 0,
+    "max_free_runs": 2,
+    "created_at": "2026-10-11 14:11:54 UTC",
+    "last_login_at": "2026-10-11 14:11:54 UTC",
+    "last_device_info": "Web Browser"
   }
 }

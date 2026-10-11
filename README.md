@@ -22,6 +22,8 @@ Every user can access ProofForge AI from **any device anywhere in the world** (m
 
 - **2 Free Assessment Runs**: Every registered account receives 2 complimentary assessment runs to test evidence fidelity and reporting before subscribing.
 - **Cross-Device Subscription Synchronization**: Once subscribed, your plan is instantly active across all your workstations, laptops, and cloud environments globally.
+- **Payment Gateway Verification & Provisioning**: Live checkout terminal supporting Credit Cards, Corporate Wire/ACH, and Web3 USDC with cryptographic transaction ledger receipts and immediate global access provisioning.
+
 
 ### Pricing Plans:
 
