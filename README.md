@@ -16,11 +16,22 @@ General-purpose LLM report generators often hallucinate reproduction steps or in
 
 ---
 
-## 💎 Subscription Tiers & Licensing
+## 💎 Global Pricing, 2 Free Trial Runs & Cross-Device Access
 
-| Feature / Capability | Pro ($49/mo) | Ultra ($199/mo) | Pro Max Ultra ($499/mo) ⚡ |
+Every user can access ProofForge AI from **any device anywhere in the world** (macOS, Windows, Linux, iOS, Android). 
+
+- **2 Free Assessment Runs**: Every registered account receives 2 complimentary assessment runs to test evidence fidelity and reporting before subscribing.
+- **Cross-Device Subscription Synchronization**: Once subscribed, your plan is instantly active across all your workstations, laptops, and cloud environments globally.
+
+### Pricing Plans:
+
+| Feature / Capability | Pro Plan | Ultra Plan | Pro Max Ultra Plan ⚡ |
 |---|:---:|:---:|:---:|
-| **Max Findings per Assessment** | 25 Findings | 100 Findings | **Unlimited** |
+| **Monthly Price** | **$49 / month** | **$199 / month** | **$499 / month** |
+| **Annual Price (20% Off)** | **$39 / month** ($470/yr) | **$159 / month** ($1,910/yr) | **$399 / month** ($4,790/yr) |
+| **Free Trial Runs** | 2 Free Runs Included | 2 Free Runs Included | 2 Free Runs Included |
+| **Cross-Device Global Access** | ✅ Yes, any device | ✅ Yes, any device | ✅ Yes, any device |
+| **Max Findings per Assessment** | 25 Findings | 100 Findings | **Unlimited Findings** |
 | **Markdown (`.md`) Deliverable** | ✅ Included | ✅ Included | ✅ Included |
 | **Executive Styled HTML (`.html`)** | ✅ Included | ✅ Included | ✅ Included |
 | **CVSS v3.1 Deterministic Engine** | ✅ Base Score | ✅ Base + Temporal | ✅ Full Environmental Matrix |
@@ -32,6 +43,7 @@ General-purpose LLM report generators often hallucinate reproduction steps or in
 | **Custom Organization Branding** | — | — | ✅ Enterprise Ready |
 | **REST API Programmatic Ingestion** | — | — | ✅ Unlimited API Calls |
 | **Support SLA** | Community Email | 12-Hour Priority | **1-Hour Dedicated Security Team** |
+
 
 ---
 

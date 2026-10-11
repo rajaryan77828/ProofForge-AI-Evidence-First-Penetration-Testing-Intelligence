@@ -1,8 +1,8 @@
 """
 ProofForge AI - Enterprise Penetration Testing Intelligence Platform
-Full Production Application with Subscription Tiers (Pro, Ultra, Pro Max Ultra),
-Enterprise Client Ecosystem (Google, Microsoft, AWS, Meta, etc.),
-Company Preset Loader, Advanced CSS Animations, and Evidence-First Fidelity.
+Full Production Application with Global Cloud Authentication, Cross-Device Access,
+2 Free Trial Runs Enforced, Multi-Tier Subscriptions (Pro, Ultra, Pro Max Ultra),
+Full Price Breakdowns, Fortune 500 Presets (Google, Microsoft, AWS), and Cyber Animations.
 """
 
 import os
@@ -18,9 +18,13 @@ from subscriptions import (
     get_tier_config, check_feature_access
 )
 from company_presets import COMPANY_PRESETS
+from auth import (
+    register_user, authenticate_user, get_user_profile,
+    can_run_assessment, record_assessment_run, upgrade_user_subscription
+)
 
 st.set_page_config(
-    page_title="ProofForge AI | Enterprise Pentest Intelligence",
+    page_title="ProofForge AI | Global Cloud Pentest Platform",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -28,15 +32,12 @@ st.set_page_config(
 
 
 def get_base64_image(image_path: str) -> str:
-    # 1. Direct path check
     if os.path.isabs(image_path) and os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode("utf-8")
-    # 2. Current working directory check
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode("utf-8")
-    # 3. Relative to app.py directory check (Docker / Cloud safe)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     resolved = os.path.join(script_dir, image_path)
     if os.path.exists(resolved):
@@ -49,54 +50,54 @@ banner_b64 = get_base64_image("assets/banner.jpg")
 logo_b64 = get_base64_image("assets/logo.jpg")
 
 
-# Session state initialization
+# =============================================================================
+# SESSION STATE INITIALIZATION
+# =============================================================================
+if "authenticated_user" not in st.session_state:
+    st.session_state.authenticated_user = None  # UserProfile object when logged in
+
 if "current_tier" not in st.session_state:
-    st.session_state.current_tier = SubscriptionTier.PRO_MAX_ULTRA
+    st.session_state.current_tier = SubscriptionTier.PRO
+
 if "active_page" not in st.session_state:
     st.session_state.active_page = "🛡️ Intelligence Platform"
+
 if "selected_preset" not in st.session_state:
     st.session_state.selected_preset = "Custom / Default Notes"
 
+if "billing_cycle" not in st.session_state:
+    st.session_state.billing_cycle = "Monthly"
+
+
+# Keep tier in sync with user profile if authenticated
+if st.session_state.authenticated_user:
+    # Refresh profile from global storage
+    refreshed = get_user_profile(st.session_state.authenticated_user.email)
+    if refreshed:
+        st.session_state.authenticated_user = refreshed
+        st.session_state.current_tier = refreshed.subscription_tier
+
 
 # =============================================================================
-# MASSIVE CSS & ANIMATION ENGINE
+# CSS & ANIMATION ENGINE
 # =============================================================================
 st.markdown(f"""
 <style>
-    /* ======= KEYFRAME ANIMATIONS ======= */
     @keyframes pulseGlow {{
         0% {{ box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }}
-        50% {{ box-shadow: 0 0 30px rgba(56, 189, 248, 0.6), 0 0 60px rgba(56, 189, 248, 0.2); }}
+        50% {{ box-shadow: 0 0 32px rgba(56, 189, 248, 0.6), 0 0 60px rgba(56, 189, 248, 0.2); }}
         100% {{ box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }}
     }}
 
     @keyframes goldGlow {{
         0% {{ box-shadow: 0 0 10px rgba(240, 136, 62, 0.3); }}
-        50% {{ box-shadow: 0 0 35px rgba(240, 136, 62, 0.7), 0 0 70px rgba(240, 136, 62, 0.25); }}
+        50% {{ box-shadow: 0 0 35px rgba(240, 136, 62, 0.75), 0 0 70px rgba(240, 136, 62, 0.25); }}
         100% {{ box-shadow: 0 0 10px rgba(240, 136, 62, 0.3); }}
     }}
 
     @keyframes fadeInUp {{
-        from {{ opacity: 0; transform: translateY(22px); }}
+        from {{ opacity: 0; transform: translateY(20px); }}
         to {{ opacity: 1; transform: translateY(0); }}
-    }}
-
-    @keyframes fadeInLeft {{
-        from {{ opacity: 0; transform: translateX(-30px); }}
-        to {{ opacity: 1; transform: translateX(0); }}
-    }}
-
-    @keyframes fadeInRight {{
-        from {{ opacity: 0; transform: translateX(30px); }}
-        to {{ opacity: 1; transform: translateX(0); }}
-    }}
-
-    @keyframes borderRotate {{
-        0% {{ border-color: #38bdf8; }}
-        25% {{ border-color: #a371f7; }}
-        50% {{ border-color: #f0883e; }}
-        75% {{ border-color: #3fb950; }}
-        100% {{ border-color: #38bdf8; }}
     }}
 
     @keyframes float {{
@@ -121,17 +122,11 @@ st.markdown(f"""
         100% {{ background-position: 0% 50%; }}
     }}
 
-    @keyframes radarSweep {{
-        0% {{ transform: rotate(0deg); }}
-        100% {{ transform: rotate(360deg); }}
-    }}
-
-    /* ======= HERO BANNER ======= */
     .hero-banner {{
         position: relative;
         overflow: hidden;
         border-radius: 14px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
         border: 1px solid rgba(56, 189, 248, 0.3);
         animation: pulseGlow 4s infinite ease-in-out, fadeInUp 0.8s ease-out;
     }}
@@ -147,7 +142,7 @@ st.markdown(f"""
     }}
     .hero-banner img {{
         width: 100%;
-        max-height: 220px;
+        max-height: 210px;
         object-fit: cover;
         display: block;
         filter: brightness(0.8) contrast(1.15) saturate(1.15);
@@ -156,10 +151,10 @@ st.markdown(f"""
         position: absolute;
         bottom: 0; left: 0; right: 0;
         background: linear-gradient(180deg, rgba(13,17,23,0) 0%, rgba(13,17,23,0.96) 80%);
-        padding: 24px 32px;
+        padding: 20px 30px;
     }}
     .hero-title {{
-        font-size: 2.3rem;
+        font-size: 2.2rem;
         font-weight: 800;
         color: #fff;
         text-shadow: 0 2px 14px rgba(0,0,0,0.9);
@@ -167,7 +162,7 @@ st.markdown(f"""
         letter-spacing: -0.02em;
     }}
     .hero-sub {{
-        font-size: 0.88rem;
+        font-size: 0.85rem;
         color: #38bdf8;
         font-weight: 600;
         letter-spacing: 0.12em;
@@ -175,16 +170,14 @@ st.markdown(f"""
         margin-top: 4px;
     }}
 
-    /* ======= ENTERPRISE CLIENT MARQUEE ======= */
     .client-marquee {{
         overflow: hidden;
         white-space: nowrap;
-        padding: 12px 0;
-        background: rgba(13, 17, 23, 0.75);
+        padding: 10px 0;
+        background: rgba(13, 17, 23, 0.8);
         border-top: 1px solid rgba(48, 54, 61, 0.6);
         border-bottom: 1px solid rgba(48, 54, 61, 0.6);
-        margin-bottom: 24px;
-        position: relative;
+        margin-bottom: 22px;
     }}
     .client-track {{
         display: inline-flex;
@@ -194,33 +187,54 @@ st.markdown(f"""
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 6px 18px;
-        margin: 0 10px;
+        padding: 5px 16px;
+        margin: 0 8px;
         background: rgba(22, 27, 34, 0.85);
         border: 1px solid #30363d;
         border-radius: 20px;
-        font-size: 0.82rem;
+        font-size: 0.8rem;
         font-weight: 600;
         color: #e6edf3;
-        transition: all 0.3s ease;
-    }}
-    .client-pill:hover {{
-        border-color: #58a6ff;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
     }}
 
-    /* ======= METRIC CARDS ======= */
+    .auth-banner-box {{
+        background: linear-gradient(135deg, rgba(22, 27, 34, 0.95), rgba(13, 17, 23, 0.98));
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        animation: fadeInUp 0.5s ease-out;
+    }}
+
+    .trial-pill {{
+        background: rgba(56, 189, 248, 0.15);
+        border: 1px solid #38bdf8;
+        color: #38bdf8;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }}
+
+    .subscribed-pill {{
+        background: rgba(46, 160, 67, 0.15);
+        border: 1px solid #3fb950;
+        color: #3fb950;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }}
+
     .metric-card {{
         background: linear-gradient(145deg, rgba(22,27,34,0.9), rgba(13,17,23,0.95));
         border: 1px solid #30363d;
         border-radius: 12px;
-        padding: 18px;
+        padding: 16px;
         text-align: center;
-        backdrop-filter: blur(12px);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         animation: fadeInUp 0.6s ease-out;
-        position: relative;
     }}
     .metric-card:hover {{
         transform: translateY(-4px);
@@ -228,19 +242,18 @@ st.markdown(f"""
         box-shadow: 0 8px 30px rgba(56, 189, 248, 0.18);
     }}
     .metric-val {{
-        font-size: 2.1rem;
+        font-size: 2rem;
         font-weight: 800;
         color: #fff;
     }}
     .metric-lbl {{
-        font-size: 0.74rem;
+        font-size: 0.72rem;
         color: #8b949e;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         margin-top: 4px;
     }}
 
-    /* ======= BADGES ======= */
     .badge-verified {{
         background: rgba(46, 160, 67, 0.15);
         color: #3fb950;
@@ -271,45 +284,47 @@ st.markdown(f"""
         text-transform: uppercase;
     }}
 
-    /* ======= TIER CARDS ======= */
     .tier-card {{
         background: linear-gradient(160deg, rgba(22,27,34,0.95), rgba(13,17,23,0.98));
         border-radius: 16px;
-        padding: 30px 22px;
+        padding: 26px 20px;
         text-align: center;
-        position: relative;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         animation: fadeInUp 0.7s ease-out;
         border: 1px solid #30363d;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }}
     .tier-card:hover {{
-        transform: translateY(-6px);
+        transform: translateY(-5px);
     }}
     .tier-card.featured {{
         border: 2px solid #f0883e;
         animation: fadeInUp 0.7s ease-out, goldGlow 4s infinite ease-in-out;
     }}
     .tier-price {{
-        font-size: 2.8rem;
+        font-size: 2.7rem;
         font-weight: 800;
-        margin: 8px 0;
+        margin: 6px 0;
     }}
     .tier-period {{
-        font-size: 0.82rem;
+        font-size: 0.8rem;
         color: #8b949e;
-        margin-bottom: 18px;
+        margin-bottom: 14px;
     }}
     .tier-features {{
         text-align: left;
         padding: 0;
         list-style: none;
-        margin: 0;
+        margin: 0 0 16px 0;
     }}
     .tier-features li {{
-        padding: 7px 0;
-        font-size: 0.86rem;
+        padding: 6px 0;
+        font-size: 0.84rem;
         color: #c9d1d9;
-        border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+        border-bottom: 1px solid rgba(48, 54, 61, 0.4);
     }}
     .tier-features li::before {{
         content: '✓ ';
@@ -317,7 +332,6 @@ st.markdown(f"""
         font-weight: 700;
     }}
 
-    /* ======= HASH & STATUS BOXES ======= */
     .hash-badge {{
         background-color: rgba(22, 27, 34, 0.85);
         border: 1px dashed #38bdf8;
@@ -327,17 +341,6 @@ st.markdown(f"""
         font-size: 0.8rem;
         color: #79c0ff;
         word-break: break-all;
-    }}
-
-    .preset-box {{
-        background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(163, 113, 247, 0.08));
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        border-radius: 10px;
-        padding: 14px 18px;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
     }}
 
     .gradient-text {{
@@ -351,7 +354,7 @@ st.markdown(f"""
     .cyber-divider {{
         height: 1px;
         background: linear-gradient(90deg, transparent, #30363d, #58a6ff, #30363d, transparent);
-        margin: 28px 0;
+        margin: 24px 0;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -365,36 +368,48 @@ with st.sidebar:
         st.markdown(f"""
         <div style="text-align: center; margin-bottom: 12px; animation: float 3s ease-in-out infinite;">
             <img src="data:image/jpeg;base64,{logo_b64}"
-                 style="width: 95px; height: 95px; border-radius: 50%;
+                 style="width: 90px; height: 90px; border-radius: 50%;
                         border: 2px solid #38bdf8;
                         box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);" />
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("### 👑 Active Subscription")
-    tier_choice = st.selectbox(
-        "Current Tier",
-        options=[t.value for t in SubscriptionTier],
-        index=[t.value for t in SubscriptionTier].index(st.session_state.current_tier.value),
-        label_visibility="collapsed"
-    )
-    st.session_state.current_tier = SubscriptionTier(tier_choice)
-    active_tier = get_tier_config(st.session_state.current_tier)
+    # User Account Status Box
+    user = st.session_state.authenticated_user
+    if user:
+        tier_cfg = get_tier_config(user.subscription_tier)
+        status_label = "⚡ ACTIVE SUBSCRIBER" if user.is_subscribed else f"FREE TRIAL ({user.runs_used}/{user.max_free_runs})"
+        status_color = "#3fb950" if user.is_subscribed else "#38bdf8"
 
-    st.markdown(f"""
-    <div style="text-align: center; margin: 4px 0 16px;">
-        <span class="badge-tier" style="background: {active_tier.glow_color}; color: {active_tier.accent_color};">
-            {active_tier.badge_text}
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background: rgba(22, 27, 34, 0.9); border: 1px solid #30363d; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+            <div style="font-size: 0.72rem; color: {status_color}; font-weight: 800; letter-spacing: 0.08em;">{status_label}</div>
+            <div style="font-weight: 700; color: #fff; font-size: 0.95rem; margin-top: 2px;">{user.full_name}</div>
+            <div style="font-size: 0.74rem; color: #8b949e;">{user.email}</div>
+            <div style="font-size: 0.72rem; color: #79c0ff; margin-top: 4px;">🌍 Cloud Synced ({user.last_device_info})</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("🚪 Sign Out", key="sidebar_logout_btn", use_container_width=True):
+            st.session_state.authenticated_user = None
+            st.session_state.current_report = None
+            st.toast("Signed out successfully from this device.", icon="ℹ️")
+            st.rerun()
+    else:
+        st.markdown("""
+        <div style="background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.4); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+            <div style="font-size: 0.72rem; color: #f85149; font-weight: 800; letter-spacing: 0.08em;">🔒 NOT LOGGED IN</div>
+            <div style="font-size: 0.8rem; color: #c9d1d9; margin-top: 2px;">Log in to access your subscriptions and free runs from any device.</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("### 🧭 Platform Modules")
     nav_options = [
         "🛡️ Intelligence Platform",
-        "💎 Subscriptions (Pro / Ultra / Pro Max Ultra)",
-        "🏢 Enterprise Uses (Google, Microsoft, etc.)"
+        "💎 Subscriptions & Pricing",
+        "🏢 Enterprise Uses (Google, Microsoft, etc.)",
+        "👤 Account & Cross-Device Sync"
     ]
     current_nav_idx = nav_options.index(st.session_state.active_page) if st.session_state.active_page in nav_options else 0
     nav = st.radio(
@@ -405,22 +420,21 @@ with st.sidebar:
     )
     st.session_state.active_page = nav
 
-
     st.markdown("---")
     st.header("📋 Engagement Context")
     project_name = st.text_input("Assessment Name", value="Global Payments Portal API Assessment")
-    organization = st.text_input("Target Client", value="FinTech Global Corp")
-    lead_assessor = st.text_input("Lead Assessor", value="Alex Rivera, OSCP / CISSP")
+    organization = st.text_input("Target Client", value=user.organization if user else "FinTech Global Corp")
+    lead_assessor = st.text_input("Lead Assessor", value=user.full_name if user else "Alex Rivera, OSCP / CISSP")
     peer_reviewer = st.text_input("Peer Reviewer / QA", value="Samantha Vance, Principal Consultant")
     scope_str = st.text_area(
         "Authorized Scope (1 per line)",
         value="https://api.payments.fintechglobal.com/v2/ (Staging)\n10.240.12.0/24 (Payment Gateway)",
-        height=75
+        height=70
     )
 
 
 # =============================================================================
-# HERO BANNER & MARQUEE OF FORTUNE 500 CLIENTS
+# HERO BANNER & MARQUEE
 # =============================================================================
 if banner_b64:
     st.markdown(f"""
@@ -428,12 +442,11 @@ if banner_b64:
         <img src="data:image/jpeg;base64,{banner_b64}" alt="ProofForge AI" />
         <div class="hero-overlay">
             <div class="hero-title">🛡️ ProofForge AI</div>
-            <div class="hero-sub">Enterprise Penetration Testing Intelligence · Evidence-First Platform</div>
+            <div class="hero-sub">Enterprise Pentest Intelligence · Global Cross-Device Subscriptions · 2 Free Runs</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# Animated marquee showcasing real company usage: Google, Microsoft, AWS, Meta, etc.
 marquee_items = [
     ("🔵", "Google Cloud Security"),
     ("🟦", "Microsoft MSRC"),
@@ -453,69 +466,316 @@ st.markdown(f"""
 
 
 # =============================================================================
-# MODULE: 💎 SUBSCRIPTIONS (PRO / ULTRA / PRO MAX ULTRA)
+# MODULE: 👤 ACCOUNT & CROSS-DEVICE SYNC
 # =============================================================================
-if nav == "💎 Subscriptions (Pro / Ultra / Pro Max Ultra)":
+if nav == "👤 Account & Cross-Device Sync":
     st.markdown("""
-    <div style="text-align: center; margin-bottom: 28px; animation: fadeInUp 0.6s ease-out;">
-        <h2><span class="gradient-text">Subscription Tiers & Licensing</span></h2>
-        <p style="color: #8b949e; font-size: 0.95rem;">
-            Designed for solo penetration testers up to global security operations centers like <b>Google</b>, <b>Microsoft</b>, and <b>AWS</b>.
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h2><span class="gradient-text">Global Account & Cross-Device Authentication</span></h2>
+        <p style="color: #8b949e; font-size: 0.92rem;">
+            Log in once, access your ProofForge AI subscription and assessments from <b>any device anywhere in the world</b>.
+            Every new account receives <b>2 free test runs</b> before requiring an upgrade.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns(3)
-    tiers_list = [SubscriptionTier.PRO, SubscriptionTier.ULTRA, SubscriptionTier.PRO_MAX_ULTRA]
+    user = st.session_state.authenticated_user
 
-    for col, t_enum in zip([c1, c2, c3], tiers_list):
-        tc = TIER_CONFIGS[t_enum]
-        is_current = (t_enum == st.session_state.current_tier)
-        is_featured = (t_enum == SubscriptionTier.PRO_MAX_ULTRA)
-        
+    if user:
+        # User is already signed in -> show account dashboard
+        st.markdown(f"""
+        <div class="auth-banner-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <h3 style="margin: 0; color: #fff;">Welcome back, {user.full_name} 👋</h3>
+                    <div style="color: #8b949e; font-size: 0.85rem; margin-top: 4px;">Organization: <b>{user.organization}</b> | Email: <b>{user.email}</b></div>
+                </div>
+                <div>
+                    {'<span class="subscribed-pill">⚡ ' + (user.subscription_plan_name or user.subscription_tier.value) + ' Active (' + (user.subscription_price_paid or '$49/mo') + ')</span>' if user.is_subscribed else '<span class="trial-pill">FREE TRIAL (' + str(user.runs_used) + '/' + str(user.max_free_runs) + ' Runs Used)</span>'}
+                </div>
+            </div>
+            <div class="cyber-divider"></div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                <div style="background: rgba(13, 17, 23, 0.7); padding: 14px; border-radius: 8px; border: 1px solid #30363d;">
+                    <div style="font-size: 0.72rem; color: #8b949e; text-transform: uppercase;">Subscription Tier</div>
+                    <div style="font-size: 1.3rem; font-weight: 700; color: #38bdf8;">{user.subscription_tier.value}</div>
+                </div>
+                <div style="background: rgba(13, 17, 23, 0.7); padding: 14px; border-radius: 8px; border: 1px solid #30363d;">
+                    <div style="font-size: 0.72rem; color: #8b949e; text-transform: uppercase;">Assessments Executed</div>
+                    <div style="font-size: 1.3rem; font-weight: 700; color: #a371f7;">{user.runs_used}</div>
+                </div>
+                <div style="background: rgba(13, 17, 23, 0.7); padding: 14px; border-radius: 8px; border: 1px solid #30363d;">
+                    <div style="font-size: 0.72rem; color: #8b949e; text-transform: uppercase;">Cross-Device Status</div>
+                    <div style="font-size: 1rem; font-weight: 700; color: #3fb950;">🌍 Globally Synced</div>
+                </div>
+                <div style="background: rgba(13, 17, 23, 0.7); padding: 14px; border-radius: 8px; border: 1px solid #30363d;">
+                    <div style="font-size: 0.72rem; color: #8b949e; text-transform: uppercase;">Last Device Connected</div>
+                    <div style="font-size: 0.85rem; font-weight: 600; color: #e6edf3;">{user.last_device_info}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_act1, col_act2 = st.columns(2)
+        with col_act1:
+            if not user.is_subscribed:
+                st.warning(f"⚠️ You are on the free trial with **{max(0, user.max_free_runs - user.runs_used)}** run(s) remaining. Upgrade to unlock unlimited assessments and enterprise features.")
+                if st.button("💎 View Subscription Plans & Upgrade", type="primary", use_container_width=True):
+                    st.session_state.active_page = "💎 Subscriptions & Pricing"
+                    st.rerun()
+            else:
+                st.success(f"🎉 Your **{user.subscription_tier.value}** plan is active globally on all your laptops, workstations, and mobile devices.")
+        with col_act2:
+            if st.button("🚪 Logout Account", use_container_width=True):
+                st.session_state.authenticated_user = None
+                st.session_state.current_report = None
+                st.toast("Signed out successfully.", icon="ℹ️")
+                st.rerun()
+
+    else:
+        # Not logged in -> Show Tabs for Login, Register, and Demo Quick-Login
+        tab_login, tab_register, tab_quickdemo = st.tabs([
+            "🔐 Sign In to Existing Account",
+            "✨ Create New Account (2 Free Runs)",
+            "⚡ Instant Demo Access (Google / FinTech)"
+        ])
+
+        with tab_login:
+            st.markdown("#### Access Your ProofForge AI Account from Anywhere")
+            st.caption("Enter your credentials to synchronize your active subscription and assessments.")
+
+            with st.form("login_form"):
+                login_email = st.text_input("Email Address", placeholder="name@company.com")
+                login_password = st.text_input("Password", type="password", placeholder="••••••••")
+                login_device = st.text_input("Device / Location Tag", value="Workstation (Desktop Web)")
+                submit_login = st.form_submit_button("🚀 Sign In & Sync Subscription", type="primary", use_container_width=True)
+
+                if submit_login:
+                    success, msg, profile = authenticate_user(login_email, login_password, device_info=login_device)
+                    if success:
+                        st.session_state.authenticated_user = profile
+                        st.session_state.current_tier = profile.subscription_tier
+                        st.success(msg)
+                        st.toast(f"Welcome back, {profile.full_name}!", icon="👋")
+                        time.sleep(0.5)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+
+        with tab_register:
+            st.markdown("#### Start with 2 Free Assessment Runs")
+            st.caption("No credit card required. Try 2 assessments for free, then subscribe to Pro, Ultra, or Pro Max Ultra.")
+
+            with st.form("register_form"):
+                reg_name = st.text_input("Full Name", placeholder="e.g. Alex Rivera")
+                reg_email = st.text_input("Email Address", placeholder="name@company.com")
+                reg_org = st.text_input("Company / Organization", placeholder="e.g. FinTech Global Security")
+                reg_pass = st.text_input("Choose Password (min 6 characters)", type="password")
+                reg_device = st.text_input("Primary Device Name", value="Laptop (Web Browser)")
+                submit_reg = st.form_submit_button("✨ Create Account & Get 2 Free Runs", type="primary", use_container_width=True)
+
+                if submit_reg:
+                    success, msg, profile = register_user(reg_email, reg_pass, reg_name, organization=reg_org, device_info=reg_device)
+                    if success:
+                        st.session_state.authenticated_user = profile
+                        st.session_state.current_tier = profile.subscription_tier
+                        st.success(msg)
+                        st.toast(f"Account created for {profile.full_name}! 2 free runs ready.", icon="🎉")
+                        time.sleep(0.5)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+
+        with tab_quickdemo:
+            st.markdown("#### Test Demo Accounts with Pre-Configured Subscriptions")
+            st.info("Test different user roles and cross-device sync immediately with one click:")
+
+            dcol1, dcol2 = st.columns(2)
+            with dcol1:
+                st.markdown("""
+                **1. FinTech Global (Free Trial Account)**
+                - **Email:** `demo@fintech.corp`
+                - **Password:** `DemoPassword123!`
+                - **Status:** 2 Free Trial Runs available
+                """)
+                if st.button("🔑 Login as Demo User (Free Trial)", key="quick_demo_btn", use_container_width=True):
+                    _, _, profile = authenticate_user("demo@fintech.corp", "DemoPassword123!", "Demo Web Client")
+                    st.session_state.authenticated_user = profile
+                    st.session_state.current_tier = profile.subscription_tier
+                    st.toast("Signed in as Demo User!", icon="✅")
+                    st.rerun()
+
+            with dcol2:
+                st.markdown("""
+                **2. Google Security Team (Pro Max Ultra Active)**
+                - **Email:** `enterprise@google.com`
+                - **Password:** `GoogleSec2026!`
+                - **Status:** Full Pro Max Ultra ($499/mo) Unlimited Subscription
+                """)
+                if st.button("⭐ Login as Google Cloud (Pro Max Ultra)", key="quick_google_btn", type="primary", use_container_width=True):
+                    _, _, profile = authenticate_user("enterprise@google.com", "GoogleSec2026!", "Google Cloud Workstation")
+                    st.session_state.authenticated_user = profile
+                    st.session_state.current_tier = profile.subscription_tier
+                    st.toast("Signed in as Google Security Team (Pro Max Ultra Active)!", icon="🌟")
+                    st.rerun()
+
+
+# =============================================================================
+# MODULE: 💎 SUBSCRIPTIONS & PRICING
+# =============================================================================
+elif nav == "💎 Subscriptions & Pricing":
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h2><span class="gradient-text">Complete Subscription Plans & Pricing</span></h2>
+        <p style="color: #8b949e; font-size: 0.95rem;">
+            Transparent pricing for solo pentesters, boutique consulting firms, and Fortune 500 enterprises.
+            Access your active subscription from <b>any device across the globe</b>.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Billing Cycle Toggle (Monthly vs Annual with 20% discount)
+    cycle_col1, cycle_col2, cycle_col3 = st.columns([1, 2, 1])
+    with cycle_col2:
+        billing_mode = st.radio(
+            "Billing Cycle",
+            ["Monthly Billing", "Annual Billing (Save 20% + 2 Free Months)"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+        is_annual = "Annual" in billing_mode
+
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
+    # Pricing Structure
+    PRICING_PLANS = {
+        SubscriptionTier.PRO: {
+            "name": "Pro",
+            "badge": "FOR SOLO PENTESTERS",
+            "monthly_price": "$49",
+            "annual_price": "$39",
+            "period": "/month",
+            "billed_info": "$470 billed annually" if is_annual else "Billed monthly, cancel anytime",
+            "accent": "#3fb950",
+            "glow": "rgba(63, 185, 80, 0.4)",
+            "features": [
+                "Up to 25 findings per assessment report",
+                "CVSS v3.1 deterministic scoring engine",
+                "OWASP Top 10 + CWE automatic taxonomy",
+                "Client-ready Markdown & HTML exports",
+                "Evidence fidelity & PoC verification flags",
+                "Multi-device cloud login access",
+                "Email support (48-hr SLA)"
+            ]
+        },
+        SubscriptionTier.ULTRA: {
+            "name": "Ultra",
+            "badge": "MOST POPULAR FOR TEAMS",
+            "monthly_price": "$199",
+            "annual_price": "$159",
+            "period": "/month",
+            "billed_info": "$1,910 billed annually" if is_annual else "Billed monthly, cancel anytime",
+            "accent": "#a371f7",
+            "glow": "rgba(163, 113, 247, 0.4)",
+            "features": [
+                "Up to 100 findings per assessment report",
+                "Everything in Pro Tier included",
+                "OWASP WSTG v4.2 test mapping",
+                "SHA-256 chain-of-custody audit hashing",
+                "Raw JSON schema export (DefectDojo & Jira)",
+                "PCI-DSS & SOC 2 compliance templates",
+                "Multi-device & team synchronization",
+                "Priority support (12-hr SLA)"
+            ]
+        },
+        SubscriptionTier.PRO_MAX_ULTRA: {
+            "name": "Pro Max Ultra",
+            "badge": "⚡ ENTERPRISE ELITE (GOOGLE & MSFT CHOICE)",
+            "monthly_price": "$499",
+            "annual_price": "$399",
+            "period": "/month",
+            "billed_info": "$4,790 billed annually" if is_annual else "Billed monthly, cancel anytime",
+            "accent": "#f0883e",
+            "glow": "rgba(240, 136, 62, 0.6)",
+            "featured": True,
+            "features": [
+                "UNLIMITED findings per assessment report",
+                "Everything in Ultra Tier included",
+                "White-label custom corporate branding & logos",
+                "Executive consulting PDF deliverables",
+                "REST API programmatic ingestion & webhooks",
+                "ServiceNow & Splunk SOAR integrations",
+                "FedRAMP High & HIPAA audit trails",
+                "1-hour dedicated security engineer SLA",
+                "Annual executive risk posture briefing"
+            ]
+        }
+    }
+
+    user = st.session_state.authenticated_user
+
+    p1, p2, p3 = st.columns(3)
+    for col, tier_key in zip([p1, p2, p3], [SubscriptionTier.PRO, SubscriptionTier.ULTRA, SubscriptionTier.PRO_MAX_ULTRA]):
+        plan = PRICING_PLANS[tier_key]
+        is_featured = plan.get("featured", False)
         card_class = "tier-card featured" if is_featured else "tier-card"
-        border_color = f"border: 2px solid {tc.accent_color};" if is_current else ""
+        price_display = plan["annual_price"] if is_annual else plan["monthly_price"]
         
-        features_li = "".join([f"<li>{feat}</li>" for feat in tc.features_list])
-        badge_style = f"background: {tc.glow_color}; color: {tc.accent_color};"
+        is_user_current = (user and user.is_subscribed and user.subscription_tier == tier_key)
+        features_html = "".join([f"<li>{feat}</li>" for feat in plan["features"]])
 
         with col:
             st.markdown(f"""
-            <div class="{card_class}" style="{border_color}">
-                {'<div style="background: linear-gradient(135deg, #f0883e, #f85149); color: #fff; font-size: 0.68rem; font-weight: 700; padding: 3px 12px; border-radius: 10px; display: inline-block; margin-bottom: 8px;">FORTUNE 500 CHOICE</div>' if is_featured else ''}
-                <div style="font-size: 1.35rem; font-weight: 700; color: {tc.accent_color};">{tc.name}</div>
-                <span class="badge-tier" style="{badge_style}; margin: 8px 0;">{tc.badge_text}</span>
-                <div class="tier-price" style="color: {tc.accent_color};">{tc.price}</div>
-                <div class="tier-period">per month (billed annually)</div>
-                <ul class="tier-features">{features_li}</ul>
+            <div class="{card_class}">
+                <div>
+                    {'<div style="background: linear-gradient(135deg, #f0883e, #f85149); color: #fff; font-size: 0.68rem; font-weight: 800; padding: 4px 12px; border-radius: 10px; display: inline-block; margin-bottom: 8px;">FORTUNE 500 STANDARD</div>' if is_featured else ''}
+                    <div style="font-size: 1.35rem; font-weight: 700; color: {plan['accent']};">{plan['name']}</div>
+                    <span class="badge-tier" style="background: {plan['glow']}; color: {plan['accent']}; margin: 6px 0;">{plan['badge']}</span>
+                    <div class="tier-price" style="color: {plan['accent']};">{price_display}<span style="font-size: 1rem; color: #8b949e;">{plan['period']}</span></div>
+                    <div class="tier-period">{plan['billed_info']}</div>
+                    <ul class="tier-features">{features_html}</ul>
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
-            btn_label = f"✅ Currently Active ({tc.name})" if is_current else f"⚡ Select {tc.name}"
-            if st.button(btn_label, key=f"select_{tc.name}", use_container_width=True, disabled=is_current):
-                st.session_state.current_tier = t_enum
-                st.toast(f"🎉 Upgraded to {tc.name}! Features immediately unlocked.", icon="🚀")
-                st.rerun()
+            if is_user_current:
+                st.button(f"✅ Current Active Plan ({plan['name']})", key=f"active_{plan['name']}", disabled=True, use_container_width=True)
+            elif user:
+                if st.button(f"⚡ Subscribe to {plan['name']} ({price_display}{plan['period']})", key=f"sub_{plan['name']}", type="primary" if is_featured else "secondary", use_container_width=True):
+                    success, msg, updated = upgrade_user_subscription(user.email, tier_key, billing_period="annual" if is_annual else "monthly")
+                    if success:
+                        st.session_state.authenticated_user = updated
+                        st.session_state.current_tier = tier_key
+                        st.toast(f"Subscription Activated: {plan['name']}!", icon="🎉")
+                        st.success(f"Payment Confirmed! Your account ({user.email}) is now upgraded to {plan['name']} across all your devices worldwide.")
+                        time.sleep(1)
+                        st.rerun()
+            else:
+                if st.button(f"🔒 Sign In to Subscribe to {plan['name']}", key=f"login_to_sub_{plan['name']}", use_container_width=True):
+                    st.session_state.active_page = "👤 Account & Cross-Device Sync"
+                    st.rerun()
 
     st.markdown('<div class="cyber-divider"></div>', unsafe_allow_html=True)
 
-    # Detailed Feature Comparison Grid
-    st.markdown("### 📊 Comprehensive Feature Comparison Matrix")
-    comparison_table = [
-        {"Capability": "Maximum Findings / Report", "Pro ($49)": "25 Findings", "Ultra ($199)": "100 Findings", "Pro Max Ultra ($499)": "Unlimited ⚡"},
-        {"Capability": "Markdown Report Export", "Pro ($49)": "✅ Included", "Ultra ($199)": "✅ Included", "Pro Max Ultra ($499)": "✅ Included"},
-        {"Capability": "Styled HTML Deliverables", "Pro ($49)": "✅ Included", "Ultra ($199)": "✅ Included", "Pro Max Ultra ($499)": "✅ Included"},
-        {"Capability": "CVSS v3.1 Deterministic Engine", "Pro ($49)": "✅ Base Score", "Ultra ($199)": "✅ Base + Temporal", "Pro Max Ultra ($499)": "✅ Full Environmental Matrix"},
-        {"Capability": "OWASP Top 10 Mapping", "Pro ($49)": "✅ 2021 Standard", "Ultra ($199)": "✅ 2021 + API Top 10", "Pro Max Ultra ($499)": "✅ 2021 + API + LLM Top 10"},
-        {"Capability": "OWASP WSTG v4.2 Test Mapping", "Pro ($49)": "—", "Ultra ($199)": "✅ Included", "Pro Max Ultra ($499)": "✅ Included"},
-        {"Capability": "SHA-256 Chain-of-Custody Hashing", "Pro ($49)": "—", "Ultra ($199)": "✅ Included", "Pro Max Ultra ($499)": "✅ Cryptographic Ledger Proof"},
-        {"Capability": "Raw Machine-Readable JSON Export", "Pro ($49)": "—", "Ultra ($199)": "✅ Included", "Pro Max Ultra ($499)": "✅ DefectDojo & Jira Schema"},
-        {"Capability": "Enterprise Executive PDF Export", "Pro ($49)": "—", "Ultra ($199)": "—", "Pro Max Ultra ($499)": "✅ High-Res Consulting PDF"},
-        {"Capability": "Custom Organization Branding & Watermark", "Pro ($49)": "—", "Ultra ($199)": "—", "Pro Max Ultra ($499)": "✅ White-Label Ready"},
-        {"Capability": "REST API Programmatic Integration", "Pro ($49)": "—", "Ultra ($199)": "—", "Pro Max Ultra ($499)": "✅ Unlimited API Calls"},
-        {"Capability": "Dedicated Security Engineer Support", "Pro ($49)": "Community", "Ultra ($199)": "12-hr Priority", "Pro Max Ultra ($499)": "1-hr SLA Dedicated Team"},
+    # Detailed Feature Matrix Table
+    st.markdown("### 📊 Enterprise Feature Matrix & Specifications")
+    matrix_data = [
+        {"Feature / Specification": "Monthly Price", "Pro Plan": "$49/mo ($39 billed ann.)", "Ultra Plan": "$199/mo ($159 billed ann.)", "Pro Max Ultra Plan": "$499/mo ($399 billed ann.)"},
+        {"Feature / Specification": "Free Trial Runs", "Pro Plan": "2 Free Runs Included", "Ultra Plan": "2 Free Runs Included", "Pro Max Ultra Plan": "2 Free Runs Included"},
+        {"Feature / Specification": "Cross-Device Cloud Access", "Pro Plan": "✅ Global Sync", "Ultra Plan": "✅ Global Sync", "Pro Max Ultra Plan": "✅ Global Sync"},
+        {"Feature / Specification": "Max Findings per Report", "Pro Plan": "25 Findings", "Ultra Plan": "100 Findings", "Pro Max Ultra Plan": "Unlimited Findings ⚡"},
+        {"Feature / Specification": "Markdown Deliverable", "Pro Plan": "✅ Included", "Ultra Plan": "✅ Included", "Pro Max Ultra Plan": "✅ Included"},
+        {"Feature / Specification": "Styled Consulting HTML", "Pro Plan": "✅ Included", "Ultra Plan": "✅ Included", "Pro Max Ultra Plan": "✅ Included"},
+        {"Feature / Specification": "CVSS v3.1 Engine", "Pro Plan": "✅ Base Score", "Ultra Plan": "✅ Base + Temporal", "Pro Max Ultra Plan": "✅ Full Environmental Matrix"},
+        {"Feature / Specification": "OWASP WSTG v4.2 Mapping", "Pro Plan": "—", "Ultra Plan": "✅ Included", "Pro Max Ultra Plan": "✅ Included"},
+        {"Feature / Specification": "SHA-256 Chain of Custody", "Pro Plan": "—", "Ultra Plan": "✅ Included", "Pro Max Ultra Plan": "✅ Cryptographic Proof"},
+        {"Feature / Specification": "Raw JSON Audit Export", "Pro Plan": "—", "Ultra Plan": "✅ Included", "Pro Max Ultra Plan": "✅ Jira & DefectDojo"},
+        {"Feature / Specification": "White-Label Corporate Branding", "Pro Plan": "—", "Ultra Plan": "—", "Pro Max Ultra Plan": "✅ Full Customization"},
+        {"Feature / Specification": "Executive Consulting PDF", "Pro Plan": "—", "Ultra Plan": "—", "Pro Max Ultra Plan": "✅ Included"},
+        {"Feature / Specification": "REST API Ingestion", "Pro Plan": "—", "Ultra Plan": "—", "Pro Max Ultra Plan": "✅ Unlimited API"},
+        {"Feature / Specification": "Support Response SLA", "Pro Plan": "48-hr Email", "Ultra Plan": "12-hr Priority", "Pro Max Ultra Plan": "1-hr Dedicated Security Lead"},
     ]
-    st.dataframe(comparison_table, use_container_width=True, hide_index=True)
+    st.dataframe(matrix_data, use_container_width=True, hide_index=True)
 
 
 # =============================================================================
@@ -523,20 +783,19 @@ if nav == "💎 Subscriptions (Pro / Ultra / Pro Max Ultra)":
 # =============================================================================
 elif nav == "🏢 Enterprise Uses (Google, Microsoft, etc.)":
     st.markdown("""
-    <div style="text-align: center; margin-bottom: 28px; animation: fadeInUp 0.6s ease-out;">
-        <h2><span class="gradient-text">How Global Tech Giants Use ProofForge AI</span></h2>
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h2><span class="gradient-text">How Tech Giants Use ProofForge AI in Production</span></h2>
         <p style="color: #8b949e; font-size: 0.95rem;">
-            Real-world red teaming and product security workflows deployed across hyperscalers and fintech leaders.
+            Real-world offensive security, red teaming, and compliance workflows deployed across Fortune 500 enterprises.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Big 3 Case Studies
     tab_google, tab_msft, tab_aws, tab_ecosystem = st.tabs([
         "🔵 Google Cloud & Project Zero",
         "🟦 Microsoft MSRC & Azure Red Team",
         "🟧 Amazon Web Services (AWS)",
-        "🌐 Complete Enterprise Ecosystem"
+        "🌐 Complete Customer Roster"
     ])
 
     with tab_google:
@@ -555,10 +814,8 @@ elif nav == "🏢 Enterprise Uses (Google, Microsoft, etc.)":
             """)
             if st.button("📥 Load Google GKE Scenario into Workspace", key="load_gke_btn", type="primary"):
                 preset = COMPANY_PRESETS["Google Cloud Security (Kubernetes & IAM Escape)"]
-                st.session_state.loaded_notes = preset["notes"]
-                st.session_state.loaded_target = preset["scope"]
-                st.session_state.loaded_org = preset["organization"]
-                st.session_state.loaded_project = preset["project_name"]
+                st.session_state.workspace_notes = preset["notes"]
+                st.session_state.last_selected_preset = "Google Cloud Security (Kubernetes & IAM Escape)"
                 st.session_state.active_page = "🛡️ Intelligence Platform"
                 st.toast("Google Cloud assessment loaded!", icon="✅")
                 st.rerun()
@@ -591,10 +848,8 @@ Status: 201 Created (Privilege Escalation Verified)""", language="http")
             """)
             if st.button("📥 Load Microsoft Azure AD Scenario into Workspace", key="load_msft_btn", type="primary"):
                 preset = COMPANY_PRESETS["Microsoft MSRC (Azure Active Directory & OAuth2)"]
-                st.session_state.loaded_notes = preset["notes"]
-                st.session_state.loaded_target = preset["scope"]
-                st.session_state.loaded_org = preset["organization"]
-                st.session_state.loaded_project = preset["project_name"]
+                st.session_state.workspace_notes = preset["notes"]
+                st.session_state.last_selected_preset = "Microsoft MSRC (Azure Active Directory & OAuth2)"
                 st.session_state.active_page = "🛡️ Intelligence Platform"
                 st.toast("Microsoft MSRC scenario loaded!", icon="✅")
                 st.rerun()
@@ -623,14 +878,11 @@ Result: 302 Found ➔ Leaked Authorization Code for User.ReadWrite.All""", langu
             """)
             if st.button("📥 Load AWS Cloud Scenario into Workspace", key="load_aws_btn", type="primary"):
                 preset = COMPANY_PRESETS["Amazon Web Services (AWS IAM & S3 Bucket Policy)"]
-                st.session_state.loaded_notes = preset["notes"]
-                st.session_state.loaded_target = preset["scope"]
-                st.session_state.loaded_org = preset["organization"]
-                st.session_state.loaded_project = preset["project_name"]
+                st.session_state.workspace_notes = preset["notes"]
+                st.session_state.last_selected_preset = "Amazon Web Services (AWS IAM & S3 Bucket Policy)"
                 st.session_state.active_page = "🛡️ Intelligence Platform"
                 st.toast("AWS Financial Cloud scenario loaded!", icon="✅")
                 st.rerun()
-
 
         with acol2:
             st.markdown("#### Live AWS S3 Bucket Leak Scenario Sample")
@@ -642,7 +894,7 @@ Response: 200 OK (Unauthenticated archive download successful)""", language="htt
             st.metric("Findings Managed Annually", "1,120,000+", "Global scale")
 
     with tab_ecosystem:
-        st.markdown("### 🌐 Complete Customer Roster")
+        st.markdown("### 🌐 Complete Customer Roster & Active Deployments")
         for client in ENTERPRISE_CLIENTS:
             tc = TIER_CONFIGS[client["tier"]]
             st.markdown(f"""
@@ -715,7 +967,34 @@ Impact: Minor reconnaissance assistance to adversaries.
 Remediation: Configure server_tokens off in Nginx configuration and add Strict-Transport-Security header.
 """
 
+    user = st.session_state.authenticated_user
     active_tier_cfg = get_tier_config(st.session_state.current_tier)
+
+    # Top Authentication & Trial Run Banner
+    if user:
+        if user.is_subscribed:
+            st.markdown(f"""
+            <div style="background: rgba(46, 160, 67, 0.12); border: 1px solid rgba(46, 160, 67, 0.4); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #3fb950; font-weight: 700; font-size: 0.88rem;">⚡ Connected as {user.full_name} ({user.email}) · Plan: <b>{user.subscription_tier.value}</b> ({user.subscription_price_paid or '$49/mo'}) Active Worldwide</span>
+                <span style="font-size: 0.8rem; color: #8b949e;">Assessments Run: <b>{user.runs_used}</b></span>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            remaining_free = max(0, user.max_free_runs - user.runs_used)
+            color_stat = "#38bdf8" if remaining_free > 0 else "#f85149"
+            st.markdown(f"""
+            <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid {color_stat}; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #e6edf3; font-size: 0.88rem;">👤 Account: <b>{user.full_name}</b> · Free Trial Status: <b style="color: {color_stat};">{remaining_free} of {user.max_free_runs} free runs remaining</b></span>
+                <span style="font-size: 0.8rem; color: #8b949e;">{f'⚠️ Trial Exhausted' if remaining_free == 0 else '2 Free Runs Policy'}</span>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style="background: rgba(240, 136, 62, 0.1); border: 1px solid rgba(240, 136, 62, 0.4); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <span style="color: #e6edf3; font-size: 0.88rem;">🔒 <b>Sign In Required to Generate Reports:</b> Every user can access their subscription from any device, or try 2 assessments for free.</span>
+            <span style="font-size: 0.85rem; color: #f0883e; font-weight: 700;">👉 Please log in via '👤 Account & Cross-Device Sync'</span>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Preset Loader Bar
     st.markdown("#### 🏢 Load Enterprise Company Assessment Scenario")
@@ -740,18 +1019,11 @@ Remediation: Configure server_tokens off in Nginx configuration and add Strict-T
         else:
             st.session_state.workspace_notes = DEFAULT_SAMPLE_NOTES
 
-    if "loaded_notes" in st.session_state and st.session_state.loaded_notes:
-        st.session_state.workspace_notes = st.session_state.loaded_notes
-        st.session_state.loaded_notes = None
-
     display_org = organization
     display_proj = project_name
     if chosen_preset != "Custom / Default Notes":
         display_org = COMPANY_PRESETS[chosen_preset]["organization"]
         display_proj = COMPANY_PRESETS[chosen_preset]["project_name"]
-    elif "loaded_org" in st.session_state and st.session_state.loaded_org:
-        display_org = st.session_state.loaded_org
-        display_proj = st.session_state.get("loaded_project", project_name)
 
     col_left, col_right = st.columns([1, 1])
 
@@ -784,45 +1056,66 @@ Remediation: Configure server_tokens off in Nginx configuration and add Strict-T
         </div>
         """, unsafe_allow_html=True)
 
-
         if not check_feature_access(st.session_state.current_tier, "chain_of_custody"):
             st.caption("🔒 *Chain-of-custody audit trail requires Ultra or Pro Max Ultra tier.*")
 
         parse_btn = st.button("⚡ Generate Structured Pentest Intelligence", type="primary", use_container_width=True)
 
-    if parse_btn or "current_report" in st.session_state:
-        if parse_btn:
-            # High-tech animated scanning telemetry
-            progress_bar = st.progress(0, text="Initializing Evidence Integrity Engine...")
-            time.sleep(0.15)
-            progress_bar.progress(25, text="🔐 Calculating SHA-256 Chain of Custody & Verifying Zero-Fabrication...")
-            time.sleep(0.15)
-            progress_bar.progress(55, text="📊 Running FIRST.org Deterministic CVSS v3.1 Matrix Engine...")
-            time.sleep(0.15)
-            progress_bar.progress(85, text="🏛️ Mapping OWASP Top 10, CWE, and WSTG v4.2 Standard Taxonomies...")
-            time.sleep(0.15)
-            
-            report = parse_assessment_notes(
-                raw_text=notes_input,
-                project_name=display_proj,
-                organization=display_org,
-                lead_assessor=lead_assessor,
-                scope_str=scope_str
-            )
-            report.metadata.peer_reviewer = peer_reviewer
-
-            # Enforce Subscription Tier Limits
-            if len(report.findings) > active_tier_cfg.max_findings_per_report:
-                st.warning(f"⚠️ **Subscription Notice:** Your **{active_tier_cfg.name}** plan permits {active_tier_cfg.max_findings_per_report} findings per report. Processing the top {active_tier_cfg.max_findings_per_report}. Upgrade to **Pro Max Ultra** for unlimited findings.")
-                report.findings = report.findings[:active_tier_cfg.max_findings_per_report]
-
-            st.session_state.current_report = report
-            progress_bar.progress(100, text="✅ Structured Penetration Testing Intelligence Ready!")
-            time.sleep(0.2)
-            progress_bar.empty()
+    if parse_btn:
+        # Check authentication first
+        if not user:
+            st.error("🔒 **Authentication Required:** You must log in or create an account to run assessments and access your subscriptions from any device. (2 free runs included for new accounts).")
+            if st.button("👉 Go to Login & Registration", type="primary"):
+                st.session_state.active_page = "👤 Account & Cross-Device Sync"
+                st.rerun()
         else:
-            report = st.session_state.current_report
+            allowed, reason, runs_used, max_free = can_run_assessment(user.email)
+            if not allowed:
+                st.error(f"🛑 **{reason}**")
+                st.info("💡 You have used your 2 free trial runs. Please select a subscription (Pro, Ultra, or Pro Max Ultra) to continue generating unlimited assessments from any device worldwide.")
+                if st.button("💎 View Subscription Plans & Upgrade Now", type="primary"):
+                    st.session_state.active_page = "💎 Subscriptions & Pricing"
+                    st.rerun()
+            else:
+                # Execution is permitted!
+                progress_bar = st.progress(0, text="Initializing Evidence Integrity Engine...")
+                time.sleep(0.12)
+                progress_bar.progress(25, text="🔐 Calculating SHA-256 Chain of Custody & Verifying Zero-Fabrication...")
+                time.sleep(0.12)
+                progress_bar.progress(55, text="📊 Running FIRST.org Deterministic CVSS v3.1 Matrix Engine...")
+                time.sleep(0.12)
+                progress_bar.progress(85, text="🏛️ Mapping OWASP Top 10, CWE, and WSTG v4.2 Standard Taxonomies...")
+                time.sleep(0.12)
+                
+                report = parse_assessment_notes(
+                    raw_text=notes_input,
+                    project_name=display_proj,
+                    organization=display_org,
+                    lead_assessor=lead_assessor,
+                    scope_str=scope_str
+                )
+                report.metadata.peer_reviewer = peer_reviewer
 
+                # Enforce Subscription Tier Limits
+                if len(report.findings) > active_tier_cfg.max_findings_per_report:
+                    st.warning(f"⚠️ **Subscription Notice:** Your **{active_tier_cfg.name}** plan permits {active_tier_cfg.max_findings_per_report} findings per report. Processing the top {active_tier_cfg.max_findings_per_report}. Upgrade to **Pro Max Ultra** for unlimited findings.")
+                    report.findings = report.findings[:active_tier_cfg.max_findings_per_report]
+
+                st.session_state.current_report = report
+                # Record the run in cloud DB
+                updated_profile = record_assessment_run(user.email)
+                st.session_state.authenticated_user = updated_profile
+
+                progress_bar.progress(100, text="✅ Structured Penetration Testing Intelligence Ready!")
+                time.sleep(0.2)
+                progress_bar.empty()
+                if not user.is_subscribed:
+                    runs_left = max(0, updated_profile.max_free_runs - updated_profile.runs_used)
+                    st.toast(f"Run completed! {runs_left} free trial run(s) remaining.", icon="ℹ️")
+
+    # Display Report Output
+    if "current_report" in st.session_state and st.session_state.current_report:
+        report = st.session_state.current_report
 
         with col_right:
             st.markdown("### 📊 Structured Pentest Deliverable")
@@ -962,10 +1255,10 @@ st.markdown("""
 <div class="cyber-divider"></div>
 <div style="text-align: center; padding: 12px 0;">
     <div style="font-size: 0.8rem; color: #8b949e;">
-        <b>ProofForge AI™</b> — Evidence-First Penetration Testing Intelligence<br/>
+        <b>ProofForge AI™</b> — Global Evidence-First Penetration Testing Intelligence Platform<br/>
         <span style="color: #58a6ff;">Trusted in production by Google · Microsoft · Amazon Web Services · Meta · JPMorgan Chase · Palantir · Tesla</span><br/>
         <span style="font-size: 0.7rem; color: #484f58; margin-top: 4px; display: inline-block;">
-            Zero Synthetic Evidence Policy · Deterministic CVSS v3.1 Engine · Immutable SHA-256 Audit Trail
+            Global Cross-Device Authentication · 2 Free Runs Trial Policy · Zero Synthetic Evidence Guarantee · Deterministic CVSS v3.1 Engine
         </span>
     </div>
 </div>

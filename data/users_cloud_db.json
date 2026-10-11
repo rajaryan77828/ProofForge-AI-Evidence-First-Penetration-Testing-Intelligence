@@ -1,0 +1,47 @@
+{
+  "demo@fintech.corp": {
+    "email": "demo@fintech.corp",
+    "password_hash": "831d93d5b6709ebbdc1e82ac43d153652459fdb2a572ad805e9734cb8be958f2",
+    "full_name": "Alex Rivera",
+    "organization": "FinTech Global Corp",
+    "subscription_tier": "Pro",
+    "is_subscribed": false,
+    "subscription_plan_name": null,
+    "subscription_price_paid": null,
+    "runs_used": 0,
+    "max_free_runs": 2,
+    "created_at": "2026-10-01 10:00:00 UTC",
+    "last_login_at": "2026-10-11 12:00:00 UTC",
+    "last_device_info": "Enterprise Workstation"
+  },
+  "enterprise@google.com": {
+    "email": "enterprise@google.com",
+    "password_hash": "d9400c06d23225e52741226a71b2cdfed21bb91849b92474bf95437c699c9a6b",
+    "full_name": "Google Security Team",
+    "organization": "Google Cloud Platform",
+    "subscription_tier": "Pro Max Ultra",
+    "is_subscribed": true,
+    "subscription_plan_name": "Pro Max Ultra",
+    "subscription_price_paid": "$499/mo",
+    "runs_used": 142,
+    "max_free_runs": 2,
+    "created_at": "2026-08-15 08:30:00 UTC",
+    "last_login_at": "2026-10-11 18:00:00 UTC",
+    "last_device_info": "Google Cloud Workstation"
+  },
+  "test_pentester_1791727047@security.org": {
+    "email": "test_pentester_1791727047@security.org",
+    "password_hash": "727510b1714149b808426ce56538719375c9b6d1a391bea89345118012c5400e",
+    "full_name": "Test Pentester",
+    "organization": "Cyber Audit Lab",
+    "subscription_tier": "Pro Max Ultra",
+    "is_subscribed": true,
+    "subscription_plan_name": "Pro Max Ultra",
+    "subscription_price_paid": "$499/month",
+    "runs_used": 2,
+    "max_free_runs": 2,
+    "created_at": "2026-10-11 13:57:27 UTC",
+    "last_login_at": "2026-10-11 13:57:27 UTC",
+    "last_device_info": "Linux Desktop (Tokyo)"
+  }
+}

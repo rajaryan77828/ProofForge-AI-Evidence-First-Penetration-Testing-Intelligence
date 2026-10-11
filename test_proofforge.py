@@ -180,7 +180,56 @@ def test_deployment_readiness():
     assert "headless = true" in config_content
     assert "base = \"dark\"" in config_content
 
-    print("   [PASS] All deployment configuration files verified and ready.")
+def test_auth_and_trial_limits():
+    print("-> Running Authentication, Trial Limits & Cross-Device Sync Tests...")
+    from auth import register_user, authenticate_user, can_run_assessment, record_assessment_run, upgrade_user_subscription
+    import time
+
+    test_email = f"test_pentester_{int(time.time())}@security.org"
+    
+    # 1. Register new user
+    ok, msg, profile = register_user(test_email, "SecurePassword999!", "Test Pentester", organization="Cyber Audit Lab", device_info="MacBook Pro (London)")
+    assert ok is True, f"Registration failed: {msg}"
+    assert profile.runs_used == 0
+    assert profile.max_free_runs == 2
+    assert profile.is_subscribed is False
+
+    # 2. Check Run 1 (Allowed)
+    allowed, reason, runs_used, max_free = can_run_assessment(test_email)
+    assert allowed is True
+    assert runs_used == 0
+    record_assessment_run(test_email)
+
+    # 3. Check Run 2 (Allowed)
+    allowed, reason, runs_used, max_free = can_run_assessment(test_email)
+    assert allowed is True
+    assert runs_used == 1
+    record_assessment_run(test_email)
+
+    # 4. Check Run 3 (Exhausted -> Blocked!)
+    allowed, reason, runs_used, max_free = can_run_assessment(test_email)
+    assert allowed is False
+    assert runs_used == 2
+    assert "Trial limit reached" in reason
+
+    # 5. Cross-Device Login on another device (e.g. from Tokyo, Japan)
+    ok, msg, profile_tokyo = authenticate_user(test_email, "SecurePassword999!", device_info="Linux Desktop (Tokyo)")
+    assert ok is True
+    assert profile_tokyo.last_device_info == "Linux Desktop (Tokyo)"
+    assert profile_tokyo.runs_used == 2
+
+    # 6. Upgrade Subscription to Pro Max Ultra
+    ok, msg, upgraded = upgrade_user_subscription(test_email, SubscriptionTier.PRO_MAX_ULTRA, billing_period="monthly")
+    assert ok is True
+    assert upgraded.is_subscribed is True
+    assert upgraded.subscription_tier == SubscriptionTier.PRO_MAX_ULTRA
+    assert "$499/month" in upgraded.subscription_price_paid
+
+    # 7. Post-upgrade run check (Now Allowed indefinitely!)
+    allowed, reason, runs_used, max_free = can_run_assessment(test_email)
+    assert allowed is True
+    assert "Active subscription" in reason
+    print("   [PASS] 2 Free Runs enforcement, Cloud Authentication, and Cross-Device Sync verified.")
 
 
 if __name__ == "__main__":
@@ -188,8 +237,10 @@ if __name__ == "__main__":
     test_parser_and_integrity_audit()
     test_subscription_tiers()
     test_company_presets()
+    test_auth_and_trial_limits()
     test_deployment_readiness()
     print("\n=======================================================")
     print("[READY] PROOFFORGE AI IS 100% READY FOR PRODUCTION DEPLOYMENT!")
     print("=======================================================")
+
 
