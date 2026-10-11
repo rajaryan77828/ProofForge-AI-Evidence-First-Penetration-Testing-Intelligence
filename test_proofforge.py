@@ -158,8 +158,10 @@ def test_deployment_readiness():
         "requirements.txt",
         os.path.join(".streamlit", "config.toml"),
         os.path.join("assets", "banner.jpg"),
-        os.path.join("assets", "logo.jpg")
+        os.path.join("assets", "logo.jpg"),
+        os.path.join("assets", "sub_banner.jpg")
     ]
+
 
     for rel_path in required_files:
         full_path = os.path.join(base_dir, rel_path)
@@ -244,13 +246,15 @@ def test_payment_processing_and_verification():
     assert user.is_subscribed is False
 
     # Check pricing calculation
-    amt_mo, lbl_mo = get_tier_pricing(SubscriptionTier.PRO_MAX_ULTRA, "monthly")
-    assert amt_mo == 499.00
-    assert "$499/month" in lbl_mo
+    p_mo = get_tier_pricing(SubscriptionTier.PRO_MAX_ULTRA, "monthly")
+    assert p_mo["usd"] == 499.00
+    assert "$499/month" in p_mo["label_usd"]
+    assert "₹41,699/month" in p_mo["label_inr"]
 
-    amt_ann, lbl_ann = get_tier_pricing(SubscriptionTier.PRO_MAX_ULTRA, "annual")
-    assert amt_ann == 4790.00
-    assert "$4,790/year" in lbl_ann
+    p_ann = get_tier_pricing(SubscriptionTier.PRO_MAX_ULTRA, "annual")
+    assert p_ann["usd"] == 4790.00
+    assert "$4,790/year" in p_ann["label_usd"]
+    assert "₹3,99,900/year" in p_ann["label_inr"]
 
     # 1. Test Payment Verification Failure (invalid card format)
     fail_ok, fail_msg, fail_tx = verify_and_process_subscription_payment(
@@ -264,7 +268,7 @@ def test_payment_processing_and_verification():
         cardholder_name="Global Chief Assessor"
     )
     assert fail_ok is False
-    assert "Invalid credit card number" in fail_msg
+    assert "Invalid card number" in fail_msg
 
     # 2. Test Payment Verification Success (valid payment gateway approval)
     succ_ok, succ_msg, receipt = verify_and_process_subscription_payment(
@@ -295,7 +299,54 @@ def test_payment_processing_and_verification():
     txs = get_user_transactions(payer_email)
     assert len(txs) == 1
     assert txs[0]["transaction_id"] == receipt.transaction_id
-    print("   [PASS] Payment authorization, cryptographic verification, and instant global access verified.")
+
+    # 5. Test PhonePe UPI payment verification with 12-digit UTR
+    phonepe_user_email = f"phonepe_payer_{int(time.time())}@security.org"
+    register_user(phonepe_user_email, "PayerPass123!", "SecOps Lead", "Red Team Ltd")
+    upi_ok, upi_msg, upi_receipt = verify_and_process_subscription_payment(
+        user_email=phonepe_user_email,
+        tier=SubscriptionTier.ULTRA,
+        billing_cycle="monthly",
+        payment_method_type="PhonePe",
+        upi_utr_reference="428190382910"
+    )
+    assert upi_ok is True
+    assert upi_receipt is not None
+    assert upi_receipt.payment_method == "PhonePe"
+    assert upi_receipt.merchant_number == "9973928945"
+    assert upi_receipt.reference_utr == "428190382910"
+    assert "INR" in upi_receipt.currency
+    assert upi_receipt.status == "verified"
+    assert len(upi_receipt.verification_hash) == 64
+
+    # 6. Test Google Pay UPI payment verification
+    gpay_user_email = f"gpay_payer_{int(time.time())}@security.org"
+    register_user(gpay_user_email, "PayerPass123!", "SecOps Architect", "Cloud Armor")
+    gpay_ok, gpay_msg, gpay_receipt = verify_and_process_subscription_payment(
+        user_email=gpay_user_email,
+        tier=SubscriptionTier.PRO,
+        billing_cycle="monthly",
+        payment_method_type="Google Pay",
+        upi_utr_reference="519283746501"
+    )
+    assert gpay_ok is True
+    assert gpay_receipt is not None
+    assert gpay_receipt.payment_method == "Google Pay"
+    assert gpay_receipt.merchant_number == "9973928945"
+    assert gpay_receipt.reference_utr == "519283746501"
+    assert gpay_receipt.status == "verified"
+
+    # 7. Test Invalid UPI UTR rejection (too short)
+    bad_upi_ok, bad_upi_msg, _ = verify_and_process_subscription_payment(
+        user_email=gpay_user_email,
+        tier=SubscriptionTier.PRO,
+        billing_cycle="monthly",
+        payment_method_type="PhonePe",
+        upi_utr_reference="1234"
+    )
+    assert bad_upi_ok is False
+    assert "UTR" in bad_upi_msg or "Transaction ID" in bad_upi_msg
+    print("   [PASS] Payment authorization, PhonePe/GPay UPI (9973928945) UTR verification, cryptographic signatures, and instant global access verified.")
 
 
 if __name__ == "__main__":

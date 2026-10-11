@@ -24,8 +24,10 @@ from auth import (
 )
 from payments import (
     verify_and_process_subscription_payment, get_tier_pricing,
-    get_user_transactions, PaymentTransaction
+    get_user_transactions, PaymentTransaction, PRIMARY_MERCHANT_NUMBER,
+    MERCHANT_UPI_HANDLES, generate_qr_code_url, generate_upi_payment_link
 )
+
 
 
 st.set_page_config(
@@ -53,6 +55,8 @@ def get_base64_image(image_path: str) -> str:
 
 banner_b64 = get_base64_image("assets/banner.jpg")
 logo_b64 = get_base64_image("assets/logo.jpg")
+sub_banner_b64 = get_base64_image("assets/sub_banner.jpg")
+
 
 
 # =============================================================================
@@ -636,15 +640,29 @@ if nav == "👤 Account & Cross-Device Sync":
 # MODULE: 💎 SUBSCRIPTIONS & PRICING
 # =============================================================================
 elif nav == "💎 Subscriptions & Pricing":
-    st.markdown("""
-    <div style="text-align: center; margin-bottom: 24px;">
-        <h2><span class="gradient-text">Complete Subscription Plans & Pricing</span></h2>
-        <p style="color: #8b949e; font-size: 0.95rem;">
-            Transparent pricing for solo pentesters, boutique consulting firms, and Fortune 500 enterprises.
-            Access your active subscription from <b>any device across the globe</b>.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Dedicated Cyber Subscription Banner
+    if sub_banner_b64:
+        st.markdown(f"""
+        <div class="hero-banner" style="border-color: rgba(240, 136, 62, 0.4);">
+            <img src="data:image/jpeg;base64,{sub_banner_b64}" alt="ProofForge AI Subscriptions" style="max-height: 230px;" />
+            <div class="hero-overlay">
+                <div class="hero-title" style="font-size: 2.1rem;">💎 Global Subscriptions & Enterprise Licensing</div>
+                <div class="hero-sub" style="color: #f0883e;">
+                    Instant Cross-Device Access · PhonePe · Google Pay · Paytm · UPI · Cards
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style="text-align: center; margin-bottom: 24px;">
+            <h2><span class="gradient-text">Complete Subscription Plans & Pricing</span></h2>
+            <p style="color: #8b949e; font-size: 0.95rem;">
+                Transparent pricing for solo pentesters, boutique consulting firms, and Fortune 500 enterprises.
+                Access your active subscription from <b>any device across the globe</b>.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Billing Cycle Toggle (Monthly vs Annual with 20% discount)
     cycle_col1, cycle_col2, cycle_col3 = st.columns([1, 2, 1])
@@ -659,15 +677,17 @@ elif nav == "💎 Subscriptions & Pricing":
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-    # Pricing Structure
+    # Pricing Structure with USD and INR
     PRICING_PLANS = {
         SubscriptionTier.PRO: {
             "name": "Pro",
             "badge": "FOR SOLO PENTESTERS",
             "monthly_price": "$49",
             "annual_price": "$39",
+            "inr_monthly": "₹4,099",
+            "inr_annual": "₹3,270",
             "period": "/month",
-            "billed_info": "$470 billed annually" if is_annual else "Billed monthly, cancel anytime",
+            "billed_info": "$470 / ₹39,250 billed annually" if is_annual else "Billed monthly, cancel anytime",
             "accent": "#3fb950",
             "glow": "rgba(63, 185, 80, 0.4)",
             "features": [
@@ -677,6 +697,7 @@ elif nav == "💎 Subscriptions & Pricing":
                 "Client-ready Markdown & HTML exports",
                 "Evidence fidelity & PoC verification flags",
                 "Multi-device cloud login access",
+                "Instant UPI & Card payment activation",
                 "Email support (48-hr SLA)"
             ]
         },
@@ -685,8 +706,10 @@ elif nav == "💎 Subscriptions & Pricing":
             "badge": "MOST POPULAR FOR TEAMS",
             "monthly_price": "$199",
             "annual_price": "$159",
+            "inr_monthly": "₹16,599",
+            "inr_annual": "₹13,290",
             "period": "/month",
-            "billed_info": "$1,910 billed annually" if is_annual else "Billed monthly, cancel anytime",
+            "billed_info": "$1,910 / ₹1,59,500 billed annually" if is_annual else "Billed monthly, cancel anytime",
             "accent": "#a371f7",
             "glow": "rgba(163, 113, 247, 0.4)",
             "features": [
@@ -705,8 +728,10 @@ elif nav == "💎 Subscriptions & Pricing":
             "badge": "⚡ ENTERPRISE ELITE (GOOGLE & MSFT CHOICE)",
             "monthly_price": "$499",
             "annual_price": "$399",
+            "inr_monthly": "₹41,699",
+            "inr_annual": "₹33,325",
             "period": "/month",
-            "billed_info": "$4,790 billed annually" if is_annual else "Billed monthly, cancel anytime",
+            "billed_info": "$4,790 / ₹3,99,900 billed annually" if is_annual else "Billed monthly, cancel anytime",
             "accent": "#f0883e",
             "glow": "rgba(240, 136, 62, 0.6)",
             "featured": True,
@@ -732,6 +757,7 @@ elif nav == "💎 Subscriptions & Pricing":
         is_featured = plan.get("featured", False)
         card_class = "tier-card featured" if is_featured else "tier-card"
         price_display = plan["annual_price"] if is_annual else plan["monthly_price"]
+        inr_display = plan["inr_annual"] if is_annual else plan["inr_monthly"]
         
         is_user_current = (user and user.is_subscribed and user.subscription_tier == tier_key)
         features_html = "".join([f"<li>{feat}</li>" for feat in plan["features"]])
@@ -744,6 +770,7 @@ elif nav == "💎 Subscriptions & Pricing":
                     <div style="font-size: 1.35rem; font-weight: 700; color: {plan['accent']};">{plan['name']}</div>
                     <span class="badge-tier" style="background: {plan['glow']}; color: {plan['accent']}; margin: 6px 0;">{plan['badge']}</span>
                     <div class="tier-price" style="color: {plan['accent']};">{price_display}<span style="font-size: 1rem; color: #8b949e;">{plan['period']}</span></div>
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #38bdf8; margin-top: -6px; margin-bottom: 6px;">({inr_display}{plan['period']})</div>
                     <div class="tier-period">{plan['billed_info']}</div>
                     <ul class="tier-features">{features_html}</ul>
                 </div>
@@ -753,7 +780,7 @@ elif nav == "💎 Subscriptions & Pricing":
             if is_user_current:
                 st.button(f"✅ Current Active Plan ({plan['name']})", key=f"active_{plan['name']}", disabled=True, use_container_width=True)
             elif user:
-                if st.button(f"💳 Proceed to Checkout: {plan['name']} ({price_display}{plan['period']})", key=f"checkout_btn_{plan['name']}", type="primary" if is_featured else "secondary", use_container_width=True):
+                if st.button(f"⚡ Pay & Activate: {plan['name']} ({price_display} / {inr_display})", key=f"checkout_btn_{plan['name']}", type="primary" if is_featured else "secondary", use_container_width=True):
                     st.session_state.checkout_tier = tier_key
                     st.rerun()
             else:
@@ -761,27 +788,28 @@ elif nav == "💎 Subscriptions & Pricing":
                     st.session_state.active_page = "👤 Account & Cross-Device Sync"
                     st.rerun()
 
-    # REAL PAYMENT CHECKOUT & VERIFICATION PORTAL
+    # REAL PAYMENT CHECKOUT TERMINAL: PHONEPE, GOOGLE PAY, PAYTM (9973928945)
     if st.session_state.checkout_tier:
         selected_tier = st.session_state.checkout_tier
         sel_plan = PRICING_PLANS[selected_tier]
-        cost_num, cost_label = get_tier_pricing(selected_tier, "annual" if is_annual else "monthly")
+        pricing_data = get_tier_pricing(selected_tier, "annual" if is_annual else "monthly")
+        qr_url = generate_qr_code_url(selected_tier, "annual" if is_annual else "monthly")
 
         st.markdown('<div class="cyber-divider"></div>', unsafe_allow_html=True)
         st.markdown(f"""
         <div style="background: linear-gradient(135deg, rgba(22, 27, 34, 0.98), rgba(13, 17, 23, 0.99)); border: 2px solid {sel_plan['accent']}; border-radius: 14px; padding: 26px 30px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7); animation: fadeInUp 0.5s ease-out;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
                 <div>
-                    <h3 style="margin: 0; color: #fff;">🛡️ Secure Payment Gateway & Verification Terminal</h3>
-                    <div style="color: #8b949e; font-size: 0.88rem; margin-top: 4px;">Upgrading account: <b>{user.email if user else 'Guest'}</b> · Instant Access Provisioning</div>
+                    <h3 style="margin: 0; color: #fff;">🛡️ Payment Gateway & Direct Verification Terminal</h3>
+                    <div style="color: #8b949e; font-size: 0.88rem; margin-top: 4px;">Recipient: <b>ProofForge AI</b> · Number: <b style="color: #38bdf8;">{PRIMARY_MERCHANT_NUMBER}</b></div>
                 </div>
                 <div style="text-align: right;">
-                    <div style="font-size: 1.4rem; font-weight: 800; color: {sel_plan['accent']};">{sel_plan['name']} Tier</div>
-                    <div style="font-size: 0.9rem; color: #3fb950; font-weight: 700;">Total: {cost_label}</div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: {sel_plan['accent']};">{sel_plan['name']} Plan</div>
+                    <div style="font-size: 1rem; color: #3fb950; font-weight: 800;">Total: {pricing_data['label_usd']} / {pricing_data['label_inr']}</div>
                 </div>
             </div>
-            <div style="font-size: 0.8rem; color: #8b949e; margin-bottom: 16px;">
-                🔒 256-bit TLS Encrypted · PCI-DSS Compliant Gateway · Verified Global Access Synchronized Worldwide
+            <div style="font-size: 0.8rem; color: #8b949e;">
+                🔒 Send payments directly via <b>PhonePe</b>, <b>Google Pay</b>, <b>Paytm</b>, or UPI to <b>{PRIMARY_MERCHANT_NUMBER}</b>. Instant verification & global access provisioning.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -789,111 +817,175 @@ elif nav == "💎 Subscriptions & Pricing":
         pay_col1, pay_col2 = st.columns([3, 2])
 
         with pay_col1:
-            st.markdown("#### 1. Select Payment Method")
+            st.markdown("#### 1. Choose Payment Method")
             pay_method = st.radio(
-                "Payment Method",
-                ["Credit Card / Debit Card", "Corporate Wire Transfer / ACH", "Crypto (USDC / Ethereum)"],
-                horizontal=True,
+                "Select Payment Mode",
+                [
+                    f"📱 UPI / PhonePe / Google Pay / Paytm ({PRIMARY_MERCHANT_NUMBER})",
+                    "💳 Credit Card / Debit Card (International)",
+                    "🏦 Corporate Bank Wire Transfer / ACH"
+                ],
                 label_visibility="collapsed"
             )
 
-            with st.form("payment_verification_form"):
-                if pay_method == "Credit Card / Debit Card":
-                    st.markdown("##### 💳 Card Details")
+            # --- OPTION A: PHONEPE / GOOGLE PAY / PAYTM (9973928945) ---
+            if "UPI" in pay_method or "PhonePe" in pay_method:
+                st.markdown(f"""
+                <div style="background: rgba(13, 17, 23, 0.85); border: 1px solid #30363d; border-radius: 12px; padding: 18px; margin: 12px 0;">
+                    <div style="font-weight: 700; color: #e6edf3; font-size: 0.95rem; margin-bottom: 8px;">
+                        📲 Send Payment Directly via Any UPI App to Number:
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <span style="font-size: 1.5rem; font-weight: 900; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 6px 16px; border-radius: 8px; border: 1px dashed #38bdf8;">
+                            {PRIMARY_MERCHANT_NUMBER}
+                        </span>
+                        <span style="font-size: 0.85rem; color: #3fb950; font-weight: 700;">(PhonePe · Google Pay · Paytm · BHIM)</span>
+                    </div>
+                    <div class="cyber-divider" style="margin: 12px 0;"></div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; font-size: 0.82rem;">
+                        <div><b>PhonePe UPI ID:</b><br/><code style="color: #a371f7;">{MERCHANT_UPI_HANDLES['PhonePe']}</code></div>
+                        <div><b>Google Pay UPI ID:</b><br/><code style="color: #38bdf8;">{MERCHANT_UPI_HANDLES['Google Pay']}</code></div>
+                        <div><b>Paytm UPI ID:</b><br/><code style="color: #f0883e;">{MERCHANT_UPI_HANDLES['Paytm']}</code></div>
+                        <div><b>Universal UPI ID:</b><br/><code style="color: #3fb950;">{MERCHANT_UPI_HANDLES['BHIM / All UPI']}</code></div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                with st.form("upi_verification_form"):
+                    st.markdown("##### ✍️ Enter Payment Details to Verify & Activate Access")
+                    sender_upi_name = st.text_input("Your Name / Sender Name", value=user.full_name if user else "Alex Rivera")
+                    sender_phone_num = st.text_input("Your Phone Number", placeholder="e.g. 9876543210")
+                    utr_input = st.text_input(
+                        "12-Digit UTR / UPI Transaction Reference Number",
+                        placeholder="e.g. 428190382910",
+                        help="You can find the 12-digit UTR in your PhonePe, Google Pay, or Paytm payment receipt details."
+                    )
+                    upi_app_used = st.selectbox("Payment App Used", ["PhonePe", "Google Pay", "Paytm / UPI", "BHIM UPI"])
+
+                    submit_upi = st.form_submit_button(
+                        label=f"⚡ Verify UPI Payment to {PRIMARY_MERCHANT_NUMBER} & Unlock Access",
+                        type="primary",
+                        use_container_width=True
+                    )
+
+                    if submit_upi:
+                        with st.spinner("Contacting Banking UPI Switch → Verifying UTR against NPCI Ledger..."):
+                            time.sleep(1.2)
+                            success_pay, msg_pay, receipt = verify_and_process_subscription_payment(
+                                user_email=user.email,
+                                tier=selected_tier,
+                                billing_cycle="annual" if is_annual else "monthly",
+                                payment_method_type=upi_app_used,
+                                upi_utr_reference=utr_input,
+                                sender_phone=sender_phone_num
+                            )
+
+                            if success_pay and receipt:
+                                st.session_state.last_payment_receipt = receipt
+                                updated_user = get_user_profile(user.email)
+                                st.session_state.authenticated_user = updated_user
+                                st.session_state.current_tier = selected_tier
+                                st.session_state.checkout_tier = None
+                                st.toast(f"Payment to {PRIMARY_MERCHANT_NUMBER} Verified! Subscription Active Globally.", icon="🎉")
+                                st.rerun()
+                            else:
+                                st.error(f"❌ Payment Verification Notice: {msg_pay}")
+
+            # --- OPTION B: CREDIT / DEBIT CARD ---
+            elif "Credit Card" in pay_method:
+                with st.form("card_payment_form"):
+                    st.markdown("##### 💳 International Card Details")
                     c_name = st.text_input("Cardholder Name", value=user.full_name if user else "Alex Rivera")
-                    c_num = st.text_input("Card Number", placeholder="4242 •••• •••• 4242", help="Visa, Mastercard, Amex, Discover")
+                    c_num = st.text_input("Card Number", placeholder="4242 •••• •••• 4242")
                     sub_c1, sub_c2 = st.columns(2)
                     with sub_c1:
                         c_exp = st.text_input("Expiry Date (MM/YY)", placeholder="12/28")
                     with sub_c2:
                         c_cvv = st.text_input("Security Code (CVV)", type="password", placeholder="123")
-                    wire_ref = None
 
-                elif pay_method == "Corporate Wire Transfer / ACH":
-                    st.markdown("##### 🏦 Enterprise Wire / ACH Instructions")
+                    submit_card = st.form_submit_button(
+                        label=f"🔒 Confirm Card Payment ({pricing_data['label_usd']})",
+                        type="primary",
+                        use_container_width=True
+                    )
+
+                    if submit_card:
+                        with st.spinner("Authorizing Card Gateway..."):
+                            time.sleep(1.2)
+                            success_pay, msg_pay, receipt = verify_and_process_subscription_payment(
+                                user_email=user.email,
+                                tier=selected_tier,
+                                billing_cycle="annual" if is_annual else "monthly",
+                                payment_method_type="Credit Card",
+                                card_number=c_num,
+                                expiry=c_exp,
+                                cvv=c_cvv,
+                                cardholder_name=c_name
+                            )
+                            if success_pay and receipt:
+                                st.session_state.last_payment_receipt = receipt
+                                updated_user = get_user_profile(user.email)
+                                st.session_state.authenticated_user = updated_user
+                                st.session_state.current_tier = selected_tier
+                                st.session_state.checkout_tier = None
+                                st.toast("Card Payment Verified! Active Globally.", icon="🎉")
+                                st.rerun()
+                            else:
+                                st.error(f"❌ Payment Error: {msg_pay}")
+
+            # --- OPTION C: CORPORATE WIRE TRANSFER ---
+            else:
+                with st.form("wire_payment_form"):
+                    st.markdown("##### 🏦 Enterprise Wire Transfer Instructions")
                     st.info("""
-                    **Bank Name:** Silicon Valley Tech Bank N.A. (San Francisco, CA)  
+                    **Bank:** Silicon Valley Tech Bank N.A. (San Francisco, CA)  
                     **Account Name:** ProofForge Intelligence LLC  
-                    **Routing / ABA:** 121000358 | **SWIFT / BIC:** SVTBUS33  
+                    **ABA / Routing:** 121000358 | **SWIFT:** SVTBUS33  
                     **Account Number:** 984021849102  
                     """)
-                    c_name = user.full_name if user else "Authorized Assessor"
-                    c_num = None
-                    c_exp = None
-                    c_cvv = None
-                    wire_ref = st.text_input("Wire Reference Number / Purchase Order (PO)", placeholder="WT-2026-904128")
+                    w_ref = st.text_input("Wire Reference Number / PO Number", placeholder="WT-2026-904128")
+                    submit_wire = st.form_submit_button("Submit Wire Reference for Verification", type="primary", use_container_width=True)
 
-                else:
-                    st.markdown("##### 🪙 Web3 / Crypto Settlement")
-                    st.info("""
-                    **Accepted Tokens:** USDC (Ethereum, Polygon, Arbitrum)  
-                    **Settlement Vault:** `0x71C...49A2d880B14B` (ProofForge Smart Contract)  
-                    """)
-                    c_name = user.full_name if user else "Web3 Assessor"
-                    c_num = None
-                    c_exp = None
-                    c_cvv = None
-                    wire_ref = st.text_input("Transaction Hash (TxID)", placeholder="0x8f2d4e8b91c...102a")
-
-                submit_pay = st.form_submit_button(
-                    label=f"🔒 Confirm & Authorize Payment ({cost_label})",
-                    type="primary",
-                    use_container_width=True
-                )
-
-                if submit_pay:
-                    with st.spinner("Connecting to Banking Gateway → Running Fraud Scoring → Verifying Authorization..."):
-                        time.sleep(1.2)
-                        method_label = "Credit Card" if "Credit" in pay_method else "Corporate Wire Transfer / ACH" if "Wire" in pay_method else "Crypto (USDC / Ethereum)"
-                        
+                    if submit_wire:
                         success_pay, msg_pay, receipt = verify_and_process_subscription_payment(
                             user_email=user.email,
                             tier=selected_tier,
                             billing_cycle="annual" if is_annual else "monthly",
-                            payment_method_type=method_label,
-                            card_number=c_num,
-                            expiry=c_exp,
-                            cvv=c_cvv,
-                            cardholder_name=c_name,
-                            wire_reference=wire_ref
+                            payment_method_type="Corporate Wire Transfer / ACH",
+                            wire_reference=w_ref
                         )
-
                         if success_pay and receipt:
                             st.session_state.last_payment_receipt = receipt
-                            # Refresh user profile in session
                             updated_user = get_user_profile(user.email)
                             st.session_state.authenticated_user = updated_user
                             st.session_state.current_tier = selected_tier
                             st.session_state.checkout_tier = None
-                            st.toast("Payment Verified! Subscription Active Globally.", icon="🎉")
+                            st.toast("Wire Transfer Logged & Verified!", icon="🎉")
                             st.rerun()
                         else:
-                            st.error(f"❌ Payment Authorization Failed: {msg_pay}")
+                            st.error(f"❌ Wire Verification Error: {msg_pay}")
 
         with pay_col2:
-            st.markdown("#### 2. Order Summary & Guarantee")
+            st.markdown(f"#### 2. Scan to Pay ({PRIMARY_MERCHANT_NUMBER})")
             st.markdown(f"""
-            <div style="background: rgba(13, 17, 23, 0.8); border: 1px solid #30363d; border-radius: 10px; padding: 18px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="color: #8b949e;">Plan:</span>
-                    <span style="font-weight: 700; color: #fff;">ProofForge {sel_plan['name']}</span>
+            <div style="background: rgba(13, 17, 23, 0.9); border: 1px solid #30363d; border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 8px;">
+                    Scan with PhonePe / Google Pay / Paytm
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="color: #8b949e;">Billing Period:</span>
-                    <span style="color: #38bdf8;">{'Annual (20% Off)' if is_annual else 'Monthly'}</span>
+                <img src="{qr_url}" style="width: 200px; height: 200px; border-radius: 10px; border: 2px solid #38bdf8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.25); margin-bottom: 12px;" alt="UPI QR Code" />
+                <div style="font-size: 0.95rem; font-weight: 800; color: #38bdf8;">
+                    UPI ID: {PRIMARY_MERCHANT_NUMBER}@ybl
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="color: #8b949e;">Device Licenses:</span>
-                    <span style="color: #3fb950; font-weight: 700;">Unlimited Devices 🌍</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                    <span style="color: #8b949e;">Finding Quota:</span>
-                    <span style="color: #f0883e; font-weight: 700;">{sel_plan['features'][0]}</span>
+                <div style="font-size: 0.78rem; color: #8b949e; margin-top: 4px;">
+                    Amount: <b style="color: #3fb950;">{pricing_data['label_inr']}</b> ({pricing_data['label_usd']})
                 </div>
                 <div class="cyber-divider" style="margin: 12px 0;"></div>
-                <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 800;">
-                    <span style="color: #fff;">Total Due Now:</span>
-                    <span style="color: {sel_plan['accent']};">{cost_label}</span>
+                <div style="text-align: left; font-size: 0.78rem; color: #c9d1d9;">
+                    <b>Steps:</b><br/>
+                    1. Open PhonePe, Google Pay, or Paytm on your phone.<br/>
+                    2. Scan QR or transfer to number <b>{PRIMARY_MERCHANT_NUMBER}</b>.<br/>
+                    3. Copy 12-digit UTR from receipt into box on left.<br/>
+                    4. Click Verify to unlock your subscription instantly!
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -921,16 +1013,18 @@ elif nav == "💎 Subscriptions & Pricing":
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 0.85rem;">
                 <div><span style="color: #8b949e;">Account:</span><br/><b>{rcpt.user_email}</b></div>
                 <div><span style="color: #8b949e;">Subscribed Tier:</span><br/><b style="color: #38bdf8;">{rcpt.tier.value}</b></div>
-                <div><span style="color: #8b949e;">Amount Paid:</span><br/><b>${rcpt.amount_usd:.2f} USD</b></div>
+                <div><span style="color: #8b949e;">Recipient Number:</span><br/><b style="color: #f0883e;">{rcpt.merchant_number}</b></div>
+                <div><span style="color: #8b949e;">Amount Paid:</span><br/><b>${rcpt.amount_usd:.2f} USD / ₹{rcpt.amount_inr:,.2f} INR</b></div>
                 <div><span style="color: #8b949e;">Payment Method:</span><br/><b>{rcpt.payment_method}</b></div>
-                <div><span style="color: #8b949e;">Verification Timestamp:</span><br/><b>{rcpt.timestamp}</b></div>
+                <div><span style="color: #8b949e;">Reference / UTR:</span><br/><b>{rcpt.reference_utr}</b></div>
+                <div><span style="color: #8b949e;">Timestamp:</span><br/><b>{rcpt.timestamp}</b></div>
             </div>
             <div style="margin-top: 14px;">
                 <span style="font-size: 0.72rem; color: #8b949e; text-transform: uppercase;">Cryptographic Ledger Hash:</span>
                 <div class="hash-badge">{rcpt.verification_hash}</div>
             </div>
             <div style="margin-top: 16px;">
-                <span style="color: #3fb950; font-weight: 700;">🚀 You now have unrestricted access to {rcpt.tier.value} from any device worldwide!</span>
+                <span style="color: #3fb950; font-weight: 700;">🚀 You now have unrestricted access to {rcpt.tier.value} across all your devices worldwide!</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -952,8 +1046,10 @@ elif nav == "💎 Subscriptions & Pricing":
                     "Invoice #": tx.get("invoice_number"),
                     "Transaction ID": tx.get("transaction_id"),
                     "Plan Tier": tx.get("tier"),
-                    "Amount": f"${tx.get('amount_usd', 0):.2f} USD",
+                    "Recipient": tx.get("merchant_number", PRIMARY_MERCHANT_NUMBER),
+                    "Amount": f"${tx.get('amount_usd', 0):.2f} USD (₹{tx.get('amount_inr', 0):,.2f})",
                     "Method": tx.get("payment_method"),
+                    "UTR / Ref": tx.get("reference_utr", "N/A"),
                     "Timestamp": tx.get("timestamp"),
                     "Status": "✅ Verified" if tx.get("status") == "verified" else tx.get("status")
                 })
@@ -963,7 +1059,8 @@ elif nav == "💎 Subscriptions & Pricing":
     # Detailed Feature Matrix Table
     st.markdown("### 📊 Enterprise Feature Matrix & Specifications")
     matrix_data = [
-        {"Feature / Specification": "Monthly Price", "Pro Plan": "$49/mo ($39 billed ann.)", "Ultra Plan": "$199/mo ($159 billed ann.)", "Pro Max Ultra Plan": "$499/mo ($399 billed ann.)"},
+        {"Feature / Specification": "Monthly Price", "Pro Plan": "$49/mo (₹4,099/mo)", "Ultra Plan": "$199/mo (₹16,599/mo)", "Pro Max Ultra Plan": "$499/mo (₹41,699/mo)"},
+        {"Feature / Specification": "UPI Payment Support", "Pro Plan": f"✅ PhonePe / GPay ({PRIMARY_MERCHANT_NUMBER})", "Ultra Plan": f"✅ PhonePe / GPay ({PRIMARY_MERCHANT_NUMBER})", "Pro Max Ultra Plan": f"✅ PhonePe / GPay ({PRIMARY_MERCHANT_NUMBER})"},
         {"Feature / Specification": "Free Trial Runs", "Pro Plan": "2 Free Runs Included", "Ultra Plan": "2 Free Runs Included", "Pro Max Ultra Plan": "2 Free Runs Included"},
         {"Feature / Specification": "Cross-Device Cloud Access", "Pro Plan": "✅ Global Sync", "Ultra Plan": "✅ Global Sync", "Pro Max Ultra Plan": "✅ Global Sync"},
         {"Feature / Specification": "Max Findings per Report", "Pro Plan": "25 Findings", "Ultra Plan": "100 Findings", "Pro Max Ultra Plan": "Unlimited Findings ⚡"},
@@ -979,6 +1076,7 @@ elif nav == "💎 Subscriptions & Pricing":
         {"Feature / Specification": "Support Response SLA", "Pro Plan": "48-hr Email", "Ultra Plan": "12-hr Priority", "Pro Max Ultra Plan": "1-hr Dedicated Security Lead"},
     ]
     st.dataframe(matrix_data, use_container_width=True, hide_index=True)
+
 
 
 

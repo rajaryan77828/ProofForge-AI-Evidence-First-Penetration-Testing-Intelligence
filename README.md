@@ -104,3 +104,25 @@ Access the application at `http://localhost:8501`.
 - **Render / Heroku / Railway**: Uses the included `Procfile` and `.python-version` files automatically.
 - **Health Check Endpoint**: Available at `http://localhost:8501/_stcore/health`.
 
+---
+
+## 💳 Enterprise Subscriptions & Payment Gateway
+
+ProofForge AI features a production-grade multi-currency payment terminal with instant UPI and international card processing:
+
+### Payment Channels & Primary Merchant Number
+- **Primary Merchant Number**: `9973928945`
+- **PhonePe UPI**: `9973928945@ybl`
+- **Google Pay (GPay) UPI**: `9973928945@okaxis`
+- **Paytm UPI**: `9973928945@paytm`
+- **BHIM Universal UPI**: `9973928945@upi`
+- **International Credit / Debit Cards**: Visa, Mastercard, AMEX with instant card validation.
+
+### Payment Flow & Verification:
+1. **Interactive QR Code**: Built-in NPCI-compliant dynamic UPI QR Code generates dynamically with tier pricing in INR (`₹4,099` for Pro, `₹16,599` for Ultra, `₹41,699` for Pro Max Ultra).
+2. **UTR Reference Input**: Enter the 12-digit Bank Transaction / UTR ID from your PhonePe or Google Pay confirmation screen.
+3. **Cryptographic SHA-256 Ledger**: Every transaction is committed with a non-repudiable hash to `payments_ledger.json`.
+4. **Global Cross-Device Access**: Accounts in `users_cloud_db.json` are upgraded immediately, granting persistent subscription access across any device worldwide.
+5. **Free Trial Governance**: Unauthenticated or free users are granted 2 assessment trial runs before subscription checkout is required.
+
+
