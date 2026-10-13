@@ -1,5 +1,109 @@
 [
   {
+    "timestamp": "2026-10-13 11:54:12 UTC",
+    "event_type": "ADMIN_USER_DELETED",
+    "actor": "ra5338446@gmail.com",
+    "details": "Permanently deleted account analyst_1791892452@security.org",
+    "severity": "CRITICAL",
+    "tamper_hash": "2c113518c526f9dc7f1f01149b880ae39be89ecc08e3ed2421ba494b457e541f"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:12 UTC",
+    "event_type": "ADMIN_ACCOUNT_STATUS",
+    "actor": "ra5338446@gmail.com",
+    "details": "Account analyst_1791892452@security.org was SUSPENDED",
+    "severity": "WARNING",
+    "tamper_hash": "b412287e4313755c41db77705714d6100786bf2d8c1825f47c08b385f4035d04"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:12 UTC",
+    "event_type": "ADMIN_PASSWORD_RESET",
+    "actor": "ra5338446@gmail.com",
+    "details": "Password reset performed for account analyst_1791892452@security.org",
+    "severity": "CRITICAL",
+    "tamper_hash": "104128068a70cc3621938e58a111eae1d33fa08c63f439edbc6ed8f4f46ea52b"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:12 UTC",
+    "event_type": "ADMIN_USER_CREATED",
+    "actor": "ra5338446@gmail.com",
+    "details": "Provisioned account analyst_1791892452@security.org with role 'Security Analyst' and tier 'Pro'",
+    "severity": "WARNING",
+    "tamper_hash": "1247c5881ec0e41135c774729a6766f1cc7e87624766ff3c28fbb5453570ced5"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:12 UTC",
+    "event_type": "ADMIN_USER_MODIFICATION",
+    "actor": "ra5338446@gmail.com",
+    "details": "Modified account demo@fintech.corp: tier=Ultra, sub=True, reset_runs=True, role=Principal Penetration Tester",
+    "severity": "WARNING",
+    "tamper_hash": "6a9cdbe37b2e7888e782803aadc8e58aa3af5e307caa570ceb44d090d7d6e640"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:12 UTC",
+    "event_type": "SECURITY_SCAN_TRIGGER",
+    "actor": "admin@proofforge.corp",
+    "details": "Executed automated scan on authorized scope",
+    "severity": "INFO",
+    "tamper_hash": "a9915bc2b2db81ca88ed5dc02c2351130eee626179b79f46f1062998d07561bf"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:12 UTC",
+    "event_type": "SUBSCRIPTION_UPGRADE",
+    "actor": "gpay_payer_1791892452@security.org",
+    "details": "Account upgraded to Pro ($49/month)",
+    "severity": "INFO",
+    "tamper_hash": "b01ec94a98bed04d0573823966e66437855067cbf172ec0d11c131bb41d9fd2b"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:12 UTC",
+    "event_type": "SUBSCRIPTION_UPGRADE",
+    "actor": "phonepe_payer_1791892452@security.org",
+    "details": "Account upgraded to Ultra ($199/month)",
+    "severity": "INFO",
+    "tamper_hash": "57dacff52b536e15299d1173e5d2860c8020a2f3870a5960cb59774b963de395"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:11 UTC",
+    "event_type": "SUBSCRIPTION_UPGRADE",
+    "actor": "payer_1791892451@defense.corp",
+    "details": "Account upgraded to Pro Max Ultra ($499/month)",
+    "severity": "INFO",
+    "tamper_hash": "988ec66d3c852733baed8830726d83f072b2d8769b6e2de35c27bbb6de377474"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:11 UTC",
+    "event_type": "AUTH_SUCCESS",
+    "actor": "rajaryan1000211@gmail.com",
+    "details": "Successful login from SecOps Terminal (Role: Super Administrator & Cyber Lead)",
+    "severity": "INFO",
+    "tamper_hash": "bd0f3398cf5527ce1a28ff376a43670a9fd5a848238b1804b77e81d93026f060"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:11 UTC",
+    "event_type": "AUTH_SUCCESS",
+    "actor": "ra5338446@gmail.com",
+    "details": "Successful login from SecOps Terminal (Role: Super Administrator & Cyber Lead)",
+    "severity": "INFO",
+    "tamper_hash": "0515f31d653779daf47e834288e7f8b1c5aba14f7b5dec4d7b677ca69ffed323"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:11 UTC",
+    "event_type": "SUBSCRIPTION_UPGRADE",
+    "actor": "test_pentester_1791892451@security.org",
+    "details": "Account upgraded to Pro Max Ultra ($499/month)",
+    "severity": "INFO",
+    "tamper_hash": "aff46cbb6866229a0dd90848388a0ec9beb4fbaecb7c534de58616805e8013cb"
+  },
+  {
+    "timestamp": "2026-10-13 11:54:11 UTC",
+    "event_type": "AUTH_SUCCESS",
+    "actor": "test_pentester_1791892451@security.org",
+    "details": "Successful login from Linux Desktop (Tokyo) (Role: Security Consultant)",
+    "severity": "INFO",
+    "tamper_hash": "e488c674c6bfd395c86613a4931a129c3d3631db14adb54453a8e69d5f27d2e6"
+  },
+  {
     "timestamp": "2026-10-13 10:27:00 UTC",
     "event_type": "AUTH_SUCCESS",
     "actor": "ra5338446@gmail.com",

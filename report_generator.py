@@ -111,6 +111,13 @@ def export_markdown_report(report: PentestReport) -> str:
 
         md.append("\n---\n")
 
+    md.append("\n## 6. Report Authorization & Integrity Attestation")
+    md.append("This document was generated using **ProofForge AI™** (Deterministic Evidence Grounding & Cryptographic Chain of Custody).")
+    md.append("- **Platform Creator:** RAJ ARYAN")
+    md.append("- **Portfolio / Contact:** [https://rajaryan.neocities.org](https://rajaryan.neocities.org)")
+    md.append(f"- **Cryptographic SHA-256 Digest:** `{report.metadata.notes_sha256}`")
+    md.append("\n")
+
     return "\n".join(md)
 
 
@@ -293,6 +300,12 @@ def export_html_report(report: PentestReport) -> str:
     <div class="container">
         {banner_html}
         {html_body}
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+            <b>ProofForge AI™</b> — Cryptographic Evidence Grounding Engine<br/>
+            Created by <b style="color: var(--accent-blue);">RAJ ARYAN</b> &nbsp;|&nbsp; 
+            <a href="https://rajaryan.neocities.org" target="_blank">rajaryan.neocities.org</a> &nbsp;|&nbsp;
+            MIT License
+        </div>
     </div>
 </body>
 </html>"""

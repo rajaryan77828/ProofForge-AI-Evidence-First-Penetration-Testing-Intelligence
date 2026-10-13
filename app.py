@@ -460,10 +460,17 @@ with st.sidebar:
     st.session_state.active_page = nav
 
     st.markdown("---")
+    st.markdown("""
+    <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; text-align: center;">
+        <div style="font-size: 0.72rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.06em;">Platform Architect</div>
+        <div style="font-size: 0.92rem; font-weight: 800; color: #38bdf8; margin: 2px 0;">Created by RAJ ARYAN</div>
+        <a href="https://rajaryan.neocities.org" target="_blank" style="font-size: 0.78rem; color: #58a6ff; text-decoration: none; font-weight: 600;">🌐 rajaryan.neocities.org ↗</a>
+    </div>
+    """, unsafe_allow_html=True)
     st.header("📋 Engagement Context")
     project_name = st.text_input("Assessment Name", value="Global Payments Portal API Assessment")
     organization = st.text_input("Target Client", value=user.organization if user else "FinTech Global Corp")
-    lead_assessor = st.text_input("Lead Assessor", value=user.full_name if user else "Alex Rivera, OSCP / CISSP")
+    lead_assessor = st.text_input("Lead Assessor", value=user.full_name if user else "RAJ ARYAN (Lead Architect)")
     peer_reviewer = st.text_input("Peer Reviewer / QA", value="Samantha Vance, Principal Consultant")
     scope_str = st.text_area(
         "Authorized Scope (1 per line)",
@@ -2167,12 +2174,17 @@ Remediation: Configure server_tokens off in Nginx configuration and add Strict-T
 # =============================================================================
 st.markdown("""
 <div class="cyber-divider"></div>
-<div style="text-align: center; padding: 12px 0;">
-    <div style="font-size: 0.8rem; color: #8b949e;">
+<div style="text-align: center; padding: 16px 0 24px 0;">
+    <div style="font-size: 0.85rem; color: #8b949e; line-height: 1.6;">
         <b>ProofForge AI™</b> — Global Evidence-First Penetration Testing Intelligence Platform<br/>
-        <span style="color: #58a6ff;">Trusted in production by Google · Microsoft · Amazon Web Services · Meta · JPMorgan Chase · Palantir · Tesla</span><br/>
-        <span style="font-size: 0.7rem; color: #484f58; margin-top: 4px; display: inline-block;">
-            Global Cross-Device Authentication · 2 Free Runs Trial Policy · Zero Synthetic Evidence Guarantee · Deterministic CVSS v3.1 Engine
+        <div style="margin: 6px 0; font-size: 0.88rem;">
+            Designed & Created by <b style="color: #38bdf8;">RAJ ARYAN</b> &nbsp;·&nbsp; 
+            <a href="https://rajaryan.neocities.org" target="_blank" style="color: #58a6ff; font-weight: 700; text-decoration: none; border-bottom: 1px dotted #58a6ff;">rajaryan.neocities.org</a> &nbsp;·&nbsp;
+            <span style="color: #3fb950; font-weight: 700;">MIT License</span>
+        </div>
+        <span style="color: #79c0ff; font-size: 0.78rem;">Trusted in production by Google · Microsoft · Amazon Web Services · Meta · JPMorgan Chase · Palantir · Tesla</span><br/>
+        <span style="font-size: 0.72rem; color: #484f58; margin-top: 4px; display: inline-block;">
+            Global Cross-Device Authentication · 2 Free Runs Trial Policy · Zero Synthetic Evidence Guarantee · Deterministic CVSS v3.1 Engine · Settlement Node: 9973928945
         </span>
     </div>
 </div>

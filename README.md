@@ -149,6 +149,17 @@ The platform includes an executive control interface accessible by verified Supe
 - **Evidence Grounding Engine**: Certifies zero synthetic hallucinations by validating that every finding is strictly grounded in raw reproduction steps and HTTP evidence.
 - **Automated AI Benchmark**: Live 5-point benchmark battery validating system defenses against OWASP Top 10 for LLMs.
 
+---
 
+## 👨‍💻 Author & Creator
 
+- **Created by**: **RAJ ARYAN**
+- **Personal Website / Portfolio**: [https://rajaryan.neocities.org](https://rajaryan.neocities.org)
+- **Primary Settlements Node**: `9973928945` (PhonePe / Google Pay / Paytm)
 
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.  
+Copyright (c) 2026 **RAJ ARYAN** ([https://rajaryan.neocities.org](https://rajaryan.neocities.org)). All rights reserved.
