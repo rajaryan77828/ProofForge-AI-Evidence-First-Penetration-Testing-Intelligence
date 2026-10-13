@@ -1,0 +1,104 @@
+{
+  "general": {
+    "app_name": "ProofForge AI\u2122",
+    "app_tagline": "Evidence-First Penetration Testing Intelligence",
+    "platform_version": "2.4.0 (Enterprise Hardened)",
+    "organization_name": "ProofForge Enterprise Security Operations",
+    "contact_support_email": "soc-lead@proofforge.corp",
+    "default_timezone": "UTC",
+    "documentation_url": "https://github.com/proofforge/proofforge-ai/docs",
+    "changelog_version": "v2.4 - Added Scope Guard, Super Admin Center & Dynamic UPI Settler"
+  },
+  "appearance": {
+    "color_theme": "Cyber Neon Dark (#0d1117 / #38bdf8)",
+    "accent_color": "#38bdf8",
+    "pulse_glow_enabled": true,
+    "radar_scanlines_enabled": true,
+    "client_marquee_enabled": true
+  },
+  "security": {
+    "min_password_length": 25,
+    "require_special_characters": true,
+    "session_inactivity_timeout_minutes": 60,
+    "max_failed_login_attempts": 3,
+    "brute_force_lockout_duration_minutes": 15,
+    "enforce_strict_cfaa_scope_guard": true,
+    "cors_allowed_origins": [
+      "http://localhost:8501",
+      "http://127.0.0.1:8501",
+      "http://192.168.7.91:8501"
+    ],
+    "content_security_policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:;"
+  },
+  "notifications": {
+    "in_app_toasts_enabled": true,
+    "critical_finding_webhook_enabled": true,
+    "webhook_url": "https://hooks.slack.com/services/PF/SEC/ALERT",
+    "webhook_secret_signature": "whsec_pf_live_2026_superkey",
+    "min_alert_severity": "High",
+    "alert_notification_email": "ra5338446@gmail.com"
+  },
+  "api_and_integrations": {
+    "rest_api_ingestion_enabled": true,
+    "default_rate_limit_rpm": 120,
+    "active_api_keys": [
+      {
+        "key_id": "PF-KEY-GOOGLE-901",
+        "name": "Google Cloud Security Automation",
+        "prefix": "pf_live_goog_",
+        "key_hash": "3a3d642bb222a348b40178093cc7f4195de78a43e544f8e16e7cf7e817b2779d",
+        "role": "Super Admin & API Ingest",
+        "created_at": "2026-10-01 10:00:00 UTC",
+        "last_used_at": "2026-10-12 14:00:00 UTC",
+        "status": "Revoked"
+      },
+      {
+        "key_id": "PF-KEY-MSFT-402",
+        "name": "Microsoft MSRC SOAR Integration",
+        "prefix": "pf_live_msft_",
+        "key_hash": "9e457025e1fac409b1a2aaa6dadccdf1196213fce8b54537f14f1769574f3c03",
+        "role": "Security Analyst",
+        "created_at": "2026-10-05 12:00:00 UTC",
+        "last_used_at": "2026-10-11 18:30:00 UTC",
+        "status": "Active"
+      },
+      {
+        "key_id": "PF-KEY-ED0C2F",
+        "name": "Splunk Automated Ingest",
+        "prefix": "pf_live_7ae5...",
+        "key_hash": "c674d9a1d51e7d832a1a3395c2d39ac10c98a4d61ac6ffb648fba93e98966f66",
+        "role": "Security Analyst",
+        "created_at": "2026-10-12 14:14:59 UTC",
+        "last_used_at": "Never",
+        "status": "Revoked"
+      },
+      {
+        "key_id": "PF-KEY-BDA99E",
+        "name": "Splunk Automated Ingest",
+        "prefix": "pf_live_16c5...",
+        "key_hash": "dde0d68820fad7cb44106173c054b968c4da949c09091d2ecedfd209f553fd83",
+        "role": "Security Analyst",
+        "created_at": "2026-10-12 14:33:33 UTC",
+        "last_used_at": "Never",
+        "status": "Revoked"
+      },
+      {
+        "key_id": "PF-KEY-23D250",
+        "name": "Splunk Automated Ingest",
+        "prefix": "pf_live_88c2...",
+        "key_hash": "47e2cedd1ce6e412c10d3b2e67abe204fb621af4975ac17ecf0320c3c08c5cb1",
+        "role": "Security Analyst",
+        "created_at": "2026-10-13 10:22:51 UTC",
+        "last_used_at": "Never",
+        "status": "Revoked"
+      }
+    ]
+  },
+  "maintenance": {
+    "maintenance_mode": false,
+    "maintenance_message": "ProofForge AI is undergoing scheduled cryptographic database migration.",
+    "auto_backup_enabled": true,
+    "last_backup_timestamp": "2026-10-12 14:14:59 UTC",
+    "docker_container_ready": true
+  }
+}

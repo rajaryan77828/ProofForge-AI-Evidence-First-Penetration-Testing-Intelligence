@@ -125,4 +125,30 @@ ProofForge AI features a production-grade multi-currency payment terminal with i
 4. **Global Cross-Device Access**: Accounts in `users_cloud_db.json` are upgraded immediately, granting persistent subscription access across any device worldwide.
 5. **Free Trial Governance**: Unauthenticated or free users are granted 2 assessment trial runs before subscription checkout is required.
 
+### Super Admin Accounts & Lifetime Enterprise Access:
+- **Admin 1**: `ra5338446@gmail.com` | Password: `HACKER@raj` (Role: Chief Security Architect, Super Admin)
+- **Admin 2**: `rajaryan1000211@gmail.com` | Password: `Hacker@raj#12345` (Role: Senior Pentest Director, Super Admin)
+- **Privilege**: Lifetime `Pro Max Ultra` access, unlimited assessment executions, and global access across any device worldwide.
+
+---
+
+## 👑 Super Admin Command Center & Governance
+
+The platform includes an executive control interface accessible by verified Super Administrators:
+- **Executive Analytics & Telemetry**: Real-time cross-device user metrics, total executions, payment volume, and runtime health.
+- **Global User Management & RBAC**: Real-time account administration, role assignment (Super Admin, Security Admin, Lead Pentester, Analyst, Auditor), tier granting, and quota resets.
+- **Financial Ledger & Settlement Reconciliation**: Full transaction ledger inspection with PhonePe / GPay UTR records directed to **`9973928945`** and SHA-256 signatures.
+- **Cryptographic Audit Log**: Tamper-evident append-only JSON event log recording every authentication attempt, privilege escalation, and configuration change.
+
+---
+
+## 🧠 AI Safety, Trust Boundaries & Scope Guard
+
+- **Scope Guard (`scope_guard.py`)**: Enforces Computer Fraud and Abuse Act (CFAA) and PTES scope boundaries across URLs, FQDNs, wildcards (`*.target.com`), single IPv4s, and CIDR subnets (`10.240.12.0/24`).
+- **Prompt Injection Defense (`ai_safety.py`)**: Detects direct instruction overrides, jailbreak strings (DAN mode), delimiter injections (`<system>`, special tokens), and exfiltration directives in assessment notes.
+- **Evidence Grounding Engine**: Certifies zero synthetic hallucinations by validating that every finding is strictly grounded in raw reproduction steps and HTTP evidence.
+- **Automated AI Benchmark**: Live 5-point benchmark battery validating system defenses against OWASP Top 10 for LLMs.
+
+
+
 
